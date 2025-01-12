@@ -1,37 +1,42 @@
 import express from "express";
 import bcrypt from "bcryptjs";
 import nodemailer from "nodemailer"
-import {User} from "../models/User.js";
+import User from "../models/user.model.js";
+import jwt from "jsonwebtoken";
+import dotenv from 'dotenv';
+dotenv.config();
+
 const router = express.Router();
 
-
 // POST request for Signup for students
-router.post("/signup",async(req,res)=>{
-    const {username, email, password} = req.body;
-    console.log(username,email,password);
-    if(!username || !email || !password){
-        return res.status(400)({message: 'All fileds are required'});
+router.post("/signup", async (req, res) => {
+    const { username, email, password ,role} = req.body;
+    console.log(username, email, password,role);
+    
+    if (!username || !email || !password || !role) {
+        return res.status(400).json({ message: 'All fields are required' });
     }
 
-    try{
-        const user = await User.findOne({email});
-        if(user){
-            return res.status(400).json({message : "User already exists"});
+    try {
+        const user = await User.findOne({ email });
+        if (user) {
+            return res.status(400).json({ message: "User already exists" });
         }
 
-        const hashedPassword = await bcrypt.hash(password,10);
+        const hashedPassword = await bcrypt.hash(password, 10);
         const newUser = new User({
-            username,
+            name : username,
             email,
-            password: hashedPassword
+            password: hashedPassword,
+            role: role
         });
 
         await newUser.save();
         console.log("Registration Successful");
-        return res.status(201).json({message: "user saved successfully"});
-    }catch(error){
-        console.log(error);//Guys remove it after the deployement
-        return res.status(500).json({message: "Internal server error"});
+        return res.status(201).json({ message: "User saved successfully" });
+    } catch (error) {
+        console.log(error); // Remove this after deployment
+        return res.status(500).json({ message: "Internal server error" });
     }
 });
 
@@ -61,18 +66,18 @@ router.post("/login",async(req,res)=>{
         //Generating JWT token for page protection so that no one can go forward without login using urls
         const token = jwt.sign(
             {
-                username : userExistance.username,
+                username : userExistance.name,
                 id: userExistance._id
             },
             process.env.KEY,
             {
-                expiresIn: "100h"
+                expiresIn: "24h"
             }
         );
 
         res.cookie("token",token,{
             httpOnly: true,
-            maxAge: "3600000",// 1 hour
+            maxAge: "86400000",// 24 hour
             secure: process.env.NODE_ENV === "production",
             sameSite: "strict",
         });
@@ -88,11 +93,13 @@ router.post("/login",async(req,res)=>{
     }
 });
 
+
 //POST request for forgot password
 router.post("/forget-password",async(req,res)=>{
     const {email} = req.body;
     try{
-        //check if the useer exists
+        //check if the user exists
+        const user = User.findOne({email});
         if(!user){
             return res.status(404).json({message: "User not registered"});
         }
@@ -103,6 +110,28 @@ router.post("/forget-password",async(req,res)=>{
             process.env.KEY,
             {expiresIn: "5m"}
         )
+
+        //save the token in user model
+        async function saveToken(userId){
+            try {
+                const updatedUser =  await User.findByIdAndUpdate(
+                    userId,
+                    {resetPassToken : token},
+                    {new: true,runValidators: true}
+                )
+
+                if(!updatedUser){
+                    console.log("User not found");
+                }else{
+                    console.log("Token saved successfully",updatedUser);
+                }
+            }catch{
+                console.error("Error in saving the password reset token",error);
+            }
+        }
+
+        saveToken(user._id);
+         
 
         //set up the transporter for sending email
         const trasporter = nodemailer.createTransport({
