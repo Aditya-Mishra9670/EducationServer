@@ -12,7 +12,7 @@ export const updateProfile = async (req, res) => {
   try {
     if (name) user.name = name;
     if (interests) user.interests = interests;
-    if (profilePic) user.profilePic = profilePic;
+    if (profilePic) user.profilePic = profilePic; //Cloud upload needed for image
 
     await user.save();
 
