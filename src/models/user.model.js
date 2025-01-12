@@ -5,7 +5,6 @@ const userSchema = mongoose.Schema(
     email: {
       type: String,
       required: true,
-      match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
       unique: true,
     },
 
@@ -21,11 +20,6 @@ const userSchema = mongoose.Schema(
 
     resetPassToken: {
       type: String,
-      default: null,
-    },
-
-    resetPassExpire: {
-      type: Date,
       default: null,
     },
 
