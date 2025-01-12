@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import { connectDB } from './lib/db.js';
+import {auth} from "./routes/authentication.js"
 
 dotenv.config();
 
@@ -17,6 +18,8 @@ app.use(cors({
 
 app.use(express.json());
 app.use(cookieParser());
+
+app.use('/auth',auth);
 
 app.get("/", (req, res) => {
     res.send("Hello World");
