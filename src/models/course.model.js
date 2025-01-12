@@ -44,7 +44,7 @@ const courseSchema = mongoose.Schema(
     },
 
     enrolledStudents: {
-      type: Number,
+      type: [mongoose.Schema.Types.ObjectId],
     },
 
     teacherId: {
