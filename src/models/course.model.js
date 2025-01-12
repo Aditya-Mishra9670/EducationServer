@@ -45,11 +45,13 @@ const courseSchema = mongoose.Schema(
 
     enrolledStudents: {
       type: [mongoose.Schema.Types.ObjectId],
+      ref:"User"
     },
 
     teacherId: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,
+      ref:"User"
     },
   },
   {

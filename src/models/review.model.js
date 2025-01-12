@@ -4,24 +4,18 @@ const reviewSchema = mongoose.Schema({
     courseId: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
+        ref:"Course"
     },
     studentId: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
+        ref:"User"
     },
     rating: {
         type: Number,
         required: true,
     },
     review: {
-        type: String,
-        required: true,
-    },
-    name: {
-        type: String,
-        required: true,
-    },
-    profilePic: {
         type: String,
         required: true,
     },
