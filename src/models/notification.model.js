@@ -4,6 +4,7 @@ const notificationSchema = mongoose.Schema({
     userId: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
+        ref:"User"
     },
     message: {
         type: String,
