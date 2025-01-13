@@ -25,7 +25,7 @@ const userSchema = mongoose.Schema(
 
     courses:{
       type:[mongoose.Schema.Types.ObjectId],
-      ref:"Courses",
+      ref:"Course",
     },
 
     profilePic: {

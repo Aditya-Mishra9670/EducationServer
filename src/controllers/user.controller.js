@@ -10,7 +10,13 @@ export const updateProfile = async (req, res) => {
   const user = req.user;
 
   try {
+    if(name.length > 18){
+      return res.status(400).json({ message: "Name should be less than 18 characters" });
+    }
     if (name) user.name = name;
+    if(interests.length > 5){
+      return res.status(400).json({ message: "Interests should be less than 5" });
+    }
     if (interests) user.interests = interests;
     if (profilePic) user.profilePic = profilePic; //Cloud upload needed for image
 
@@ -44,7 +50,7 @@ export const getEnrolled = async (req, res) => {
       return res.status(400).json({ message: "Already enrolled in course" });
     }
 
-    user.course.push(courseId);
+    user.courses.push(courseId);
     course.enrolledStudents.push(user._id);
 
     await user.save();
@@ -62,6 +68,10 @@ export const getEnrolled = async (req, res) => {
 export const getMyCourses = async (req, res) => {
   const user = req.user;
   try {
+    if(!user.courses.length){
+      return res.status(404).json({ message: "No courses found" });
+    }
+    console.log(user.courses)
     await user.populate("courses");
     return res
       .status(200)
@@ -93,7 +103,7 @@ export const abandonCourse = async (req, res) => {
       return res.status(400).json({ message: "Course not found" });
     }
 
-    user.courses = user.courses.filter((id) => id !== courseId);
+    user.courses = user.courses = user.courses.filter((id) => id.toString() !== courseId.toString());
     await user.save();
 
     return res
@@ -143,4 +153,6 @@ export const getRecommendedCourses = async (req, res) => {
         return res.status(500).json({ message: "Internal server error" });
     }
 };
+
+
 
