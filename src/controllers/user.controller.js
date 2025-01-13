@@ -139,20 +139,40 @@ export const updatePass = async (req, res) => {
 };
 
 export const getRecommendedCourses = async (req, res) => {
-    try {
-        const { interests } = req.user;
+  try {
+      const { interests } = req.user;
+      if (!interests || interests.length === 0) {
+          return res.status(400).json({ message: "User interests are missing or empty" });
+      }
 
-        const courses = await Course.find({ category: { $in: interests } });
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 10;
+      const skip = (page - 1) * limit;
 
-        if (courses.length === 0) {
-            return res.status(404).json({ message: "No courses found yet" });
-        }
+      const courses = await Course.find({ category: { $in: interests } }).skip(skip).limit(limit);
 
-        return res.status(200).json({ message: "Recommended courses fetched", data: courses });
-    } catch (error) {
-        console.log("Error in fetching recommended courses,", error);
-        return res.status(500).json({ message: "Internal server error" });
-    }
+      const totalCourses = await Course.countDocuments({ category: { $in: interests } });
+
+      if (courses.length === 0) {
+          return res.status(404).json({ message: "No courses found yet" });
+      }
+
+      return res.status(200).json({
+          message: "Recommended courses fetched",
+          data: courses,
+          pagination: {
+              total: totalCourses,
+              page,
+              pages: Math.ceil(totalCourses / limit)
+          }
+      });
+  } catch (error) {
+      if (error.name === 'CastError' || error.name === 'ValidationError') {
+          return res.status(400).json({ message: "Invalid request data", error: error.message });
+      }
+      console.log("Error in fetching recommended courses,", error);
+      return res.status(500).json({ message: "Internal server error" });
+  }
 };
 
 // User notifications 
