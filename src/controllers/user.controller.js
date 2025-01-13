@@ -69,17 +69,39 @@ export const getEnrolled = async (req, res) => {
 export const getMyCourses = async (req, res) => {
   const user = req.user;
   try {
-    if(!user.courses.length){
-      return res.status(404).json({ message: "No courses found" });
-    }
-    console.log(user.courses)
-    await user.populate("courses");
-    return res
-      .status(200)
-      .json({ message: "Courses fetched successfully", data: user.courses });
+      if (!user.courses || user.courses.length === 0) {
+          return res.status(404).json({ message: "No courses found" });
+      }
+
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 10;
+      const skip = (page - 1) * limit;
+
+      await user.populate({
+          path: 'courses',
+          options: {
+              skip: skip,
+              limit: limit
+          }
+      });
+
+      const totalCourses = user.courses.length;
+
+      return res.status(200).json({
+          message: "Courses fetched successfully",
+          data: user.courses,
+          pagination: {
+              total: totalCourses,
+              page,
+              pages: Math.ceil(totalCourses / limit)
+          }
+      });
   } catch (error) {
-    console.log("Error in fetching my courses", error);
-    return res.status(500).json({ message: "Internal server error" });
+      if (error.name === 'CastError' || error.name === 'ValidationError') {
+          return res.status(400).json({ message: "Invalid request data", error: error.message });
+      }
+      console.log("Error in fetching my courses", error);
+      return res.status(500).json({ message: "Internal server error" });
   }
 };
 
