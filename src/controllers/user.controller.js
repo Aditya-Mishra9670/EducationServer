@@ -1,6 +1,7 @@
 // import User from "../models/user.model.js";
 import mongoose from "mongoose";
 import Course from "../models/course.model.js";
+import Notification from "../models/notification.model.js";
 import validator from "validator";
 import bcrypt from "bcryptjs";
 
@@ -154,5 +155,35 @@ export const getRecommendedCourses = async (req, res) => {
     }
 };
 
+// User notifications 
 
+export const getNotifications = async (req, res) => {
+  try {
+    if (!req.user || !req.user.id) {
+      return res.status(400).json({
+        success: false,
+        message: "User ID is missing or invalid. Please authenticate properly."
+      });
+    }
 
+    const notifications = await Notification.find({ userId: req.user.id });
+    if (notifications.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No notifications found for the specified user."
+      });
+    }
+    return res.status(200).json({
+      success: true,
+      data: notifications
+    });
+
+  } catch (error) {
+    console.error("Error fetching notifications:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server Error. Could not fetch notifications.",
+      error: error.message
+    });
+  }
+};

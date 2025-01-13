@@ -27,6 +27,7 @@ app.use('/user',checkAuth,userRouter);
 app.use('/teacher',checkAuth,checkTeacherAuth,teacherRouter);
 
 app.use('/admin',checkAuth,checkAdminAuth,adminRouter);
+// app.use('/admin',adminRouter);
 
 app.listen(process.env.PORT, () => {
     connectDB();
