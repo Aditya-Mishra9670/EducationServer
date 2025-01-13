@@ -5,62 +5,54 @@ import mongoose from "mongoose";
 
 // Function to get all users with pagination
 export const allUsers = async (req, res) => {
-  try {
-    // Validate page query parameter
-    const page = parseInt(req.query.page, 10);
-    if (isNaN(page) || page <= 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid page number. Page must be a positive integer.",
-      });
+    try {
+        const adminId = req.user.id;
+
+        // Validate page query parameter
+        const page = parseInt(req.query.page, 10);
+        if (isNaN(page) || page <= 0) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid page number. Page must be a positive integer.",
+            });
+        }
+
+        const limit = 50; // Number of users per page
+        const skip = (page - 1) * limit; // Skip the previous pages' results
+
+        // Query to get users with pagination, excluding the admin's own ID
+        const users = await User.find({ _id: { $ne: adminId } }).skip(skip).limit(limit);
+
+        // Get the total number of users to calculate the total pages
+        const totalUsers = await User.countDocuments({ _id: { $ne: adminId } });
+
+        // Check if the requested page exists
+        const totalPages = Math.ceil(totalUsers / limit);
+        if (page > totalPages && totalPages !== 0) {
+            return res.status(404).json({
+                success: false,
+                message: "Page not found.",
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            data: users,
+            pagination: {
+                total: totalUsers,
+                page,
+                pages: totalPages
+            }
+        });
+    } catch (error) {
+        console.error("Error fetching users:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Server Error. Could not fetch users.",
+            error: error.message
+        });
     }
-
-    const limit = 50; // Number of users per page
-    const skip = (page - 1) * limit; // Skip the previous pages' results
-
-    // Query to get users with pagination
-    const users = await User.find().skip(skip).limit(limit);
-
-    // Get the total number of users to calculate the total pages
-    const totalUsers = await User.countDocuments();
-
-    // Check if the requested page exists
-    const totalPages = Math.ceil(totalUsers / limit);
-    if (page > totalPages && totalPages !== 0) {
-      return res.status(404).json({
-        success: false,
-        message: "Page not found. Requested page exceeds total pages.",
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      data: users,
-      page: page,
-      totalPages: totalPages,
-      totalUsers: totalUsers,
-    });
-  } catch (error) {
-    // Check for database-specific errors
-    if (error.name === "MongoNetworkError") {
-      return res.status(503).json({
-        success: false,
-        message: "Database connection error. Please try again later.",
-      });
-    }
-
-    // Handle all other errors
-    return res.status(500).json({
-      success: false,
-      message: "Server Error",
-      error: error.message,
-    });
-  }
 };
-
-
-
-
 
 export const getUserbyId = async (req,res) =>{
     try{
