@@ -13,7 +13,6 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-
 //For Cookies
 export const generateAuthToken = async (userId, res) => {
   const token = jwt.sign({ userId }, process.env.JWT_KEY, {
@@ -164,5 +163,42 @@ export const sendPasswordResetMail = async (email, name, token) => {
   `,
   };
 
+  await transporter.sendMail(mailContent);
+};
+
+export const sendSuspensionMail = async (email, name, reason) => {
+  const mailContent = {
+    from: "StudyTube <no-reply@studytube.com>",
+    to: email,
+    subject: "Account Suspension Notification",
+    html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9; border-radius: 8px;">
+            <div style="text-align: center; margin-bottom: 20px;">
+              <img src="https://res.cloudinary.com/dzitsseoz/image/upload/v1736671628/vcgq9rhodhvrs6dcridx.png" alt="StudyTube Logo" style="width: 150px; height: auto;">
+            </div>
+            <h2 style="text-align: center; color: #333;">Account Suspension Notification</h2>
+            <p style="font-size: 16px; color: #555; line-height: 1.6;">
+              Hi ${name},
+            </p>
+            <p style="font-size: 16px; color: #555; line-height: 1.6;">
+              We regret to inform you that your StudyTube account has been suspended due to the following reason:
+            </p>
+            <p style="font-size: 16px; color: #555; line-height: 1.6;">
+              <strong>${reason}</strong>
+            </p>
+            <p style="font-size: 16px; color: #555; line-height: 1.6;">
+              If you believe this suspension was made in error, please contact our support team immediately.
+            </p>
+            <p style="font-size: 16px; color: #555; line-height: 1.6;">
+              Best regards,<br>
+              The StudyTube Team
+            </p>
+            <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
+            <p style="font-size: 12px; color: #888; text-align: center;">
+              This email was sent to you as a registered user of StudyTube. If you did not sign up, please ignore this email.
+            </p>
+          </div>
+        `,
+  };
   await transporter.sendMail(mailContent);
 };
