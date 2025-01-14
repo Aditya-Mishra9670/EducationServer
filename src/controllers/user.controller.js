@@ -201,13 +201,6 @@ export const getRecommendedCourses = async (req, res) => {
 
 export const getNotifications = async (req, res) => {
   try {
-    if (!req.user || !req.user.id) {
-      return res.status(400).json({
-        success: false,
-        message: "User ID is missing or invalid. Please authenticate properly."
-      });
-    }
-
     const notifications = await Notification.find({ userId: req.user.id });
     if (notifications.length === 0) {
       return res.status(404).json({
