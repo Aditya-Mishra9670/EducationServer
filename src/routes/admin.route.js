@@ -5,7 +5,7 @@ const router = express.Router();
 
   
 router.get('/allUsers',allUsers);
-router.get('/user',getUserbyId);
+router.get('/:userId',getUserbyId);
 router.post('/createNotification',createNotification);
 router.delete('/removeUser',deletebyId);
 
