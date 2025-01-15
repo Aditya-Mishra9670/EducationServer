@@ -1,6 +1,6 @@
 import User from "../models/user.model.js";
 import Notification from "../models/notification.model.js";
-import Report from "../models/reports.model.js";
+import Report from "../models/report.model.js";
 import mongoose from "mongoose";
 import { sendSuspensionMail } from "../lib/utils.js";
 import { removecontent, NotifyOwner, NotifyReporter, sendMailOwner, sendMailReporter } from "../lib/reportUtils.js";
