@@ -197,6 +197,15 @@ export const getRecommendedCourses = async (req, res) => {
   }
 };
 
+
+//AddComment 
+
+//AddReviewForCourse
+
+//Report Content
+
+
+
 // User notifications 
 
 export const getNotifications = async (req, res) => {

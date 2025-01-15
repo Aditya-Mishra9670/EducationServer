@@ -82,7 +82,7 @@ export const getUserbyId = async (req, res) => {
   }
 };
 
-export const deletebyId = async (req, res) => {
+export const deleteUserbyId = async (req, res) => {
   try {
     const { userId, reason } = req.body;
     if (reason.length > 15) {
@@ -175,4 +175,12 @@ export const createNotification = async (req, res) => {
     });
   }
 };
+
+//get reported content
+
+//review reported content (edit/delete) [Send notification/mail to owner about the change] and send a notification to usre who reported content about the resolved report
+
+//
+
+
 
