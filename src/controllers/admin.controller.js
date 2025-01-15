@@ -176,11 +176,18 @@ export const createNotification = async (req, res) => {
   }
 };
 
-//get reported content
+//get all reported content
+export const getReports = async(req,res)=>{};
 
-//review reported content (edit/delete) [Send notification/mail to owner about the change] and send a notification to usre who reported content about the resolved report
 
-//
+//get specific reported content
+export const getReportedContent = async(req,res)=>{};
+
+
+
+//review reported content (edit/delete) [Send notification/mail to owner about the change] and send a notification to usee who reported content about the resolved report
+export const reviewReport = async(req,res)=>{};
+
 
 
 
