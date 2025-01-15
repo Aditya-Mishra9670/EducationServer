@@ -4,6 +4,7 @@ import Course from "../models/course.model.js";
 import Notification from "../models/notification.model.js";
 import validator from "validator";
 import bcrypt from "bcryptjs";
+import cloudinary from "../lib/cloud.js";
 
 export const updateProfile = async (req, res) => {
   //Only name, Interests and profilePic are updatable
@@ -19,7 +20,14 @@ export const updateProfile = async (req, res) => {
       return res.status(400).json({ message: "Interests should be less than 5" });
     }
     if (interests) user.interests = interests;
-    if (profilePic) user.profilePic = profilePic; //Cloud upload needed for image
+
+    //Uploading user profile pic to cloud storage and updating the user doc.
+    if (profilePic){
+      const response = await cloudinary.uploader.upload(profilePic, {
+        folder: "StudyTube/ProfilePics",
+      });
+      user.profilePic = response.secure_url;
+    } 
 
     await user.save();
 
