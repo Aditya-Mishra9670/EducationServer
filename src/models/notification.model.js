@@ -10,6 +10,11 @@ const notificationSchema = mongoose.Schema({
         type: String,
         required: true,
     },
+    
+    //For navigating through notification
+    reference:{
+        type:String,
+    },
     read: {
         type: Boolean,
         default: false,
