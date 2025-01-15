@@ -1,13 +1,14 @@
 import User from "../models/user.model.js";
 import Notification from "../models/notification.model.js";
+import Report from "../models/reports.model.js";
 import mongoose from "mongoose";
 import { sendSuspensionMail } from "../lib/utils.js";
+import { removecontent, NotifyOwner, NotifyReporter, sendMailOwner, sendMailReporter } from "../lib/reportUtils.js";
 
 // Function to get all users with pagination
 export const allUsers = async (req, res) => {
   try {
     const adminId = req.user.id;
-
     // Validate page query parameter
     const page = parseInt(req.query.page, 10);
     if (isNaN(page) || page <= 0) {
@@ -177,17 +178,104 @@ export const createNotification = async (req, res) => {
 };
 
 //get all reported content
-export const getReports = async(req,res)=>{};
+export const getReports = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
+
+        const reports = await Report.find().skip(skip).limit(limit);
+        const totalReports = await Report.countDocuments();
+
+        if (reports.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "No reports found."
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            data: reports,
+            pagination: {
+                total: totalReports,
+                page,
+                pages: Math.ceil(totalReports / limit)
+            }
+        });
+    } catch (error) {
+        console.error("Error fetching reports:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Server Error. Could not fetch reports.",
+            error: error.message,
+        });
+    }
+};
 
 
 //get specific reported content
-export const getReportedContent = async(req,res)=>{};
+export const getReportedContent = async(req,res)=>{
+    try{
+        const reportId = req.body.reportId;
+        if(!mongoose.Types.ObjectId.isValid(reportId)){
+            return res.status(400).json({success:false,message:"Invalid ID format"});
+        }
+        const report = await Report.findById(reportId);
+        if(!report){
+            return res.status(404).json({success:false,message:"Report not found"});
+        }
+        return res.status(200).json({success:true,data:report});
+    }catch(error){
+        return res.status(500).json({success:false,message:"Server Error",error:error.message});
+    }
+};
 
 
 
 //review reported content (edit/delete) [Send notification/mail to owner about the change] and send a notification to usee who reported content about the resolved report
-export const reviewReport = async(req,res)=>{};
-
-
-
-
+export const reviewReport = async(req,res)=>{
+  try{
+    const {reportId,action} = req.body;
+    if(!mongoose.Types.ObjectId.isValid(reportId)){
+      return res.status(400).json({success:false,message:"Invalid ID format"});
+    }
+    const report = await Report.findById(reportId);
+    if(!report){
+      return res.status(404).json({success:false,message:"Report not found"});
+    }
+    if(report.resolved){
+      return res.status(400).json({success:false,message:"Report already resolved"});
+    }
+    if(action === "delete"){
+      const idTobeDeleted = report.entityReported;
+      const type = report.type;
+      //send notification to the owner of the content
+      if(type==='content') await NotifyOwner(idTobeDeleted,type);
+      //send notification to the user who reported the content
+      await NotifyReporter(report.reporterId,reportId);
+      //send mail to the owner of the content
+      if(type==='content')await sendMailOwner(idTobeDeleted,type);
+      //send mail to the user who reported the content
+      await sendMailReporter(report.reporterId,reportId);
+      //delete the reported content
+      await removecontent(idTobeDeleted,type);
+      //delete the report 
+      await Report.findByIdAndDelete(reportId);
+      //return success message
+      return res.status(200).json({success:true,message:"Report resolved successfully"});
+    }
+    if(action === "edit"){
+      //Will be implemented after the cloud configration 
+      //edit the reported content
+      //send notification to the owner of the content
+      //send notification to the user who reported the content
+      //send mail to the owner of the content
+      //send mail to the user who reported the content
+      //delete the report 
+      //return success message
+    }
+  }catch(error){
+    return res.status(500).json({success:false,message:"Server Error",error:error.message});
+  }
+};
