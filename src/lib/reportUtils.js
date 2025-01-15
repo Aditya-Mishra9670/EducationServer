@@ -31,6 +31,7 @@ const sendEmail = async (to, subject, body) => {
 };
 
 // Function to remove content[ Course, User, Educator, Comment]
+//It needs to be upadted again for the [course,tutor and video ]specificity. we have to exclude the user from removed entities 
 export const removecontent = async (contentId,type) => {
     try {
         if(type === 'Course'){
