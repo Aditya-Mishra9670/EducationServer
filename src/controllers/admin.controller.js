@@ -255,9 +255,11 @@ export const reviewReport = async(req,res)=>{
       //send notification to the user who reported the content
       await NotifyReporter(report.reporterId,reportId);
       //send mail to the owner of the content
-      if(type==='content')await sendMailOwner(idTobeDeleted,type);
+      if(type==='Video' || type === 'course')await sendMailOwner(idTobeDeleted,type,action);
       //send mail to the user who reported the content
       await sendMailReporter(report.reporterId,reportId);
+      //remove the course from the students mycourses who have enrolled the course
+      
       //delete the reported content
       await removecontent(idTobeDeleted,type);
       //delete the report 
@@ -266,14 +268,8 @@ export const reviewReport = async(req,res)=>{
       return res.status(200).json({success:true,message:"Report resolved successfully"});
     }
     if(action === "edit"){
-      //Will be implemented after the cloud configration 
-      //edit the reported content
-      //send notification to the owner of the content
-      //send notification to the user who reported the content
-      //send mail to the owner of the content
-      //send mail to the user who reported the content
-      //delete the report 
-      //return success message
+      //send notification to the owner of the content to edit the content;
+      await sendMailOwner(report.entityReported,report.type,action);
     }
   }catch(error){
     return res.status(500).json({success:false,message:"Server Error",error:error.message});

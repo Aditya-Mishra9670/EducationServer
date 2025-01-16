@@ -109,14 +109,48 @@ export const NotifyReporter = async (reporterId, reportId) => {
     }
 };
 
-// Function to send an email to the owner
-export const sendMailOwner = async (idTobeDeleted,type) => {
+// Function to find the owner of the content
+export const findOwner = async (idTobeDeleted, type) => {
     try {
-        const subject = 'Content Removed';
-        const body = 'Your content has been removed due to a report. Please review the content and make necessary changes.';
-        const ownerEmail = type === 'course' ? (await Course.findById(idTobeDeleted)).email : (await User.findById(idTobeDeleted)).email;
-        await sendEmail(ownerEmail, subject, body);
-        console.log(`Email sent to owner at ${ownerEmail}.`);
+        if (type === 'course') {
+            const course = await Course.findById(idTobeDeleted);
+            if (course) {
+                return course.teacherId;
+            }
+        } else if (type === 'video') {
+            const course = await Course.findOne({ 'lectures._id': idTobeDeleted }, { 'lectures.$': 1 });
+            if (course) {
+                return course.teacherId;
+            }
+        } else if (type === 'user' || type === 'educator') {
+            const user = await User.findById(idTobeDeleted);
+            if (user) {
+                return user._id;
+            }
+        }
+    } catch (error) {
+        console.error(`Error finding owner with ID ${idTobeDeleted}:`, error);
+        throw error;
+    }
+    return null;
+};
+export const sendMailOwner = async (idTobeDeleted,type,action) => {
+    try {
+        if(action == "edit"){
+            const subject = 'Edit Reported Content';
+            const body = 'Your content has been reported. Please review the content and make necessary changes.';
+
+            const Owner = await findOwner(idTobeDeleted,type);
+            const ownerEmail = await User.findById(Owner).email;
+            await sendEmail(ownerEmail, subject, body);
+            console.log(`Email sent to owner at ${ownerEmail}.`);
+        }else{
+            const subject = 'Content Removed';
+            const body = 'Your content has been removed due to a report. Please review the content and make necessary changes.';
+            const ownerEmail = (type === 'course' || type === 'video') ? (await Course.findById(idTobeDeleted)).teacherId : (await User.findById(idTobeDeleted)).email;
+            await sendEmail(ownerEmail, subject, body);
+            console.log(`Email sent to owner at ${ownerEmail}.`);
+        }
     } catch (error) {
         console.error(`Error sending email to owner at ${ownerEmail}:`, error);
         throw error;
