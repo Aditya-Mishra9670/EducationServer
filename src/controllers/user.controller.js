@@ -2,6 +2,7 @@
 import mongoose from "mongoose";
 import Course from "../models/course.model.js";
 import Notification from "../models/notification.model.js";
+import Review from "../models/review.model.js";
 import validator from "validator";
 import bcrypt from "bcryptjs";
 import cloudinary from "../lib/cloud.js";
@@ -209,6 +210,44 @@ export const getRecommendedCourses = async (req, res) => {
 //AddComment 
 
 //AddReviewForCourse
+export const addReview = async (req, res) => {
+  const courseId = req.body.CourseId;
+  const studentId = req.user.id;
+  const rating = req.body.rating;
+  const review = req.body.review;
+  try {
+    if (!courseId || !mongoose.isValidObjectId(courseId)) {
+      return res.status(400).json({ message: "Invalid Course Id" });
+    }
+
+    const course = await Course.findById(courseId);
+    if (!course) {
+      return res.status(404).json({ message: "Course not found" });
+    }
+
+    const existingReview = await Review.findOne({ courseId, studentId });
+    if (existingReview) {
+      return res.status(400).json({ message: "Review already exists" });
+    }
+
+    const newReview = new Review({
+      courseId,
+      studentId,
+      rating,
+      review,
+    });
+
+    await newReview.save();
+
+    return res.status(201).json({
+      message: "Review added successfully",
+      data: newReview,
+    });
+  } catch (error) {
+    console.log("Error in adding review", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
 
 //Report Content
 

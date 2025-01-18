@@ -1,16 +1,13 @@
 import mongoose from 'mongoose';
-
-
-
 const reportedSchema = new mongoose.Schema({
   // The type of entity being reported (content, user, or teacher)
   type: {
     type: String,
     required: true,
-    enum: ["Course", "Video", "Comment","Review", "User", "Educator"] // Allowed types
+    enum: ['content', 'user', 'teacher'], // Allowed types
   },
   // ID of the reported entity
-  entityReported: {
+  reportedId: {
     type: mongoose.Schema.Types.ObjectId,
     required: true,
     refPath: 'type', // Dynamic reference to the collection based on type
@@ -19,29 +16,32 @@ const reportedSchema = new mongoose.Schema({
   reporterId: {
     type: mongoose.Schema.Types.ObjectId,
     required: true,
-    ref: 'User', // Reference to the User model
+    ref: 'User', // Assuming there is a User collection
   },
   // Reason for reporting
-  reasonTOReport: {
+  reason: {
     type: String,
     required: true,
-    enum: ["Spam", "Inappropriate", "Hate speech", "Violence", "Other"] // Allowed reasons
+    enum: [
+      'inappropriate content',
+      'spam',
+      'harassment',
+      'plagiarism',
+      'other',
+    ], // Predefined reasons
   },
-
   // Additional details for the report
   details: {
     type: String,
     maxlength: 500, // Limit additional details to 500 characters
   },
-  resolved:{
-    type:Boolean,
-    default:false
+  // Status of the report (for admin review)
+  status: {
+    type: String,
+    default: 'pending',
+    enum: ['pending', 'reviewed', 'resolved'], // Workflow statuses
   },
-  createdAt: {
-    type: Date,
-    default: Date.now
-  }
-});
+  // Timestamps for record keeping
+}, { timestamps: true });
 
-const Report = mongoose.model('Report', reportedSchema);
-export default Report;
+module.exports = mongoose.model('Reported', reportedSchema);
