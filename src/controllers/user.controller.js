@@ -3,6 +3,8 @@ import mongoose from "mongoose";
 import Course from "../models/course.model.js";
 import Notification from "../models/notification.model.js";
 import Review from "../models/review.model.js";
+import Comment from "../models/comment.model.js";
+import Video from "../models/video.model.js";
 import validator from "validator";
 import bcrypt from "bcryptjs";
 import cloudinary from "../lib/cloud.js";
@@ -207,7 +209,38 @@ export const getRecommendedCourses = async (req, res) => {
 };
 
 
-//AddComment 
+//AddComment
+export const addcomment = async (req, res) => {
+   const videoId = req.body.videoId;
+    const studentId = req.user.id;
+    const comment = req.body.comment;
+    try {
+      if (!videoId || !mongoose.isValidObjectId(videoId)) {
+        return res.status(400).json({ message: "Invalid Video Id" });
+      }
+  
+      const video = await Video.findById(videoId);
+      if (!video) {
+        return res.status(404).json({ message: "Video not found" });
+      }
+  
+      const newComment = new Comment({
+        videoId,
+        studentId,
+        comment,
+      });
+  
+      await newComment.save();
+  
+      return res.status(201).json({
+        message: "Comment added successfully",
+        data: newComment,
+      });
+    } catch (error) {
+      console.log("Error in adding comment", error);
+      return res.status(500).json({ message: "Internal server error" });
+    }
+}; 
 
 //AddReviewForCourse
 export const addReview = async (req, res) => {
