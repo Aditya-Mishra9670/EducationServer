@@ -62,6 +62,10 @@ const courseSchema = mongoose.Schema(
       required: true,
       ref:"User"
     },
+    topictags: {
+      type: [String],
+      required: true,
+    },
   },
   {
     timestamps: true,
