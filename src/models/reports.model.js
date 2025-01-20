@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+
 const reportedSchema = new mongoose.Schema({
   // The type of entity being reported (content, user, or teacher)
   type: {
@@ -16,19 +17,7 @@ const reportedSchema = new mongoose.Schema({
   reporterId: {
     type: mongoose.Schema.Types.ObjectId,
     required: true,
-    ref: 'User', // Assuming there is a User collection
-  },
-  // Reason for reporting
-  reason: {
-    type: String,
-    required: true,
-    enum: [
-      'inappropriate content',
-      'spam',
-      'harassment',
-      'plagiarism',
-      'other',
-    ], // Predefined reasons
+    ref: 'User',
   },
   // Additional details for the report
   details: {
@@ -44,4 +33,6 @@ const reportedSchema = new mongoose.Schema({
   // Timestamps for record keeping
 }, { timestamps: true });
 
-module.exports = mongoose.model('Reported', reportedSchema);
+const Reported = mongoose.model('Reported', reportedSchema);
+
+export default Reported;

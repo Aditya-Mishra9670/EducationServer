@@ -1,6 +1,5 @@
 import mongoose from "mongoose";
 
-// Define a recursive reply schema
 const replySchema = new mongoose.Schema(
   {
     studentId: {
@@ -24,7 +23,7 @@ const replySchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-    replies: [this], // Self-referencing for nested replies
+    replies: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Reply' }] // Self-referencing for nested replies
   },
   {
     timestamps: true,
@@ -61,17 +60,13 @@ const reviewSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-    reported: {
-      type: Boolean,
-      default: false,
-    },
-    replies: [replySchema], // Embed the recursive reply schema
+    replies: [replySchema] // Embedding reply schema
   },
   {
     timestamps: true,
   }
 );
 
-const Review = mongoose.model("Review", reviewSchema);
+const Review = mongoose.model('Review', reviewSchema);
 
 export default Review;
