@@ -35,7 +35,7 @@ const sendEmail = async (to, subject, body) => {
 export const removecontent = async (contentId,type) => {
     try {
         if(type === 'Course'){
-            const course = await Course.findById(contentId);
+            const course = await Course.findByIdAnd(contentId);
             if (!course) {
                 console.error(`Course with ID ${contentId} not found.`);
                 return;
