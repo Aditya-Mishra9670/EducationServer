@@ -1,4 +1,5 @@
-// import User from "../models/user.model.js";
+import { PDFDocument, rgb } from "pdf-lib";
+import fs from "fs";
 import mongoose from "mongoose";
 import Course from "../models/course.model.js";
 import Notification from "../models/notification.model.js";
@@ -130,7 +131,9 @@ export const abandonCourse = async (req, res) => {
     });
 
     if (!studentEnrollment) {
-      return res.status(400).json({ message: "Must be enrolled in course to leave it" });
+      return res
+        .status(400)
+        .json({ message: "Must be enrolled in course to leave it" });
     }
 
     const course = await Course.findByIdAndUpdate(courseId, {
@@ -143,10 +146,11 @@ export const abandonCourse = async (req, res) => {
 
     return res.status(200).json({ message: "Course abandoned successfully" });
   } catch (error) {
-    return res.status(500).json({ message: "Internal server error", error: error.message });
+    return res
+      .status(500)
+      .json({ message: "Internal server error", error: error.message });
   }
 };
-
 
 export const updatePass = async (req, res) => {
   const { newPassword } = req.body;
@@ -241,5 +245,76 @@ export const getNotifications = async (req, res) => {
       message: "Server Error. Could not fetch notifications.",
       error: error.message,
     });
+  }
+};
+
+export const generateCertificate = async (req, res) => {
+  const { courseId } = req.body;
+  const user = req.user;
+
+  try {
+    if (!mongoose.isValidObjectId(courseId)) {
+      return res.status(400).json({ message: "Invalid course ID" });
+    }
+
+    const enrollment = await Enrollment.findOne({
+      courseId,
+      studentId: user._id,
+    }).populate("courseId");
+    if (!enrollment) {
+      return res.status(400).json({ message: "User not enrolled in course" });
+    }
+
+    if (enrollment.progress < 90) {
+      return res.status(400).json({ message: "Course not completed yet" });
+    }
+
+    const templatePath = "./public/pdfTemplate.pdf";
+    const templateBuffer = fs.readFileSync(templatePath);
+    const pdfDoc = await PDFDocument.load(templateBuffer);
+
+    const studentName = user.name;
+    const courseName = enrollment?.courseId?.title;
+    const issueDate = new Date().toLocaleDateString();
+
+    const page = pdfDoc.getPage(0);
+
+    const studentNameWidth = studentName.length * 13;
+    const courseNameWidth = courseName.length * 11;
+
+    const studentNameX = 162 + (602 - 162 - studentNameWidth) / 2;
+    const courseNameX = 162 + (602 - 162 - courseNameWidth) / 2;
+
+    page.drawText(studentName, {
+      x: studentNameX,
+      y: 335,
+      size: 28,
+      color: rgb(240 / 255, 193 / 255, 69 / 255),
+    });
+
+    page.drawText(courseName, {
+      x: courseNameX,
+      y: 250,
+      size: 24,
+      color: rgb(240 / 255, 193 / 255, 69 / 255),
+    });
+    page.drawText(issueDate, {
+      x: 490,
+      y: 212,
+      size: 16,
+      color: rgb(240 / 255, 193 / 255, 69 / 255),
+    });
+
+    const pdfBytes = await pdfDoc.save();
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename=certificate-${user._id}.pdf`
+    );
+    return res.send(Buffer.from(pdfBytes));
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: "Internal server error" });
   }
 };
