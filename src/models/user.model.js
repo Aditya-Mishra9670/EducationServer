@@ -23,11 +23,6 @@ const userSchema = mongoose.Schema(
       default: null,
     },
 
-    courses:{
-      type:[mongoose.Schema.Types.ObjectId],
-      ref:"Course",
-    },
-
     profilePic: {
       type: String,
       default:
