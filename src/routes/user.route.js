@@ -1,22 +1,45 @@
 import express from "express";
-import { abandonCourse, generateCertificate, getEnrolled, getMyCourses, getNotifications,getRecommendedCourses, updatePass, updateProfile } from "../controllers/user.controller.js";
+import {
+  abandonCourse,
+  addComment,
+  addReview,
+  generateCertificate,
+  getEnrolled,
+  getMyCourses,
+  getNotifications,
+  getRecommendedCourses,
+  markAllNotificationsAsRead,
+  markNotificationAsRead,
+  reportContent,
+  updatePass,
+  updateProfile,
+} from "../controllers/user.controller.js";
 
 const router = express.Router();
 
-router.post("/update-profile",updateProfile);
+// Profile routes
+router.post("/update-profile", updateProfile);
+router.post("/update-pass", updatePass);
 
-router.post("/enroll/:courseId",getEnrolled);
+// Course enrollment routes
+router.post("/enroll/:courseId", getEnrolled);
+router.post("/abandon/:courseId", abandonCourse);
+router.get("/myCourses", getMyCourses);
+router.get("/recommendation", getRecommendedCourses);
 
-router.get("/myCourses",getMyCourses);
+// Review and comment routes
+router.post("/add-comment", addComment);
+router.post("/add-review", addReview);
 
-router.get("/notifications",getNotifications)
-router.post("/update-pass",updatePass);
+// Report content route
+router.post("/report-content", reportContent);
 
-router.post("/abandon/:courseId",abandonCourse);
+// Notification routes
+router.get("/notifications", getNotifications);
+router.put("/notifications/mark-as-read", markNotificationAsRead);
+router.put("/notifications/mark-all-as-read", markAllNotificationsAsRead);
 
-router.get("/recommendation",getRecommendedCourses);
-
-router.post("/generateCertficate",generateCertificate);
-
+// Certificate generation route
+router.post("/generate-certificate", generateCertificate);
 
 export default router;

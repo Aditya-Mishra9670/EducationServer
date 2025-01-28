@@ -10,6 +10,8 @@ import Enrollment from "../models/enrollment.model.js";
 import Review from "../models/review.model.js";
 import Comment from "../models/comment.model.js";
 import Report from "../models/report.model.js";
+import Video from "../models/video.model.js";
+import User from "../models/user.model.js";
 
 
 export const updateProfile = async (req, res) => {
@@ -221,52 +223,81 @@ export const getRecommendedCourses = async (req, res) => {
   }
 };
 
+
 //AddComment
 export const addComment = async (req, res) => {
-  try{
-    const {videoId, studentId, comment} = req.body;
-    if(!videoId || !studentId || !comment){
+  try {
+    const studentId = req.user._id;
+    const { videoId, comment } = req.body;
+    if (!videoId || !comment) {
       return res.status(400).json({
         success: false,
-        message: "Please provide all required fields"
+        message: "Please provide all required fields",
       });
+    }
+    if(!mongoose.isValidObjectId(videoId)){
+      return res.status(400).json({message:"Invalid video Id"})
+    }
+    if (comment.length > 200) {
+      return res
+        .status(400)
+        .json({ message: "Comment cannot be greater than 200 characters" });
+    }
+    const video = await Video.findById(videoId);
+    if (!video) {
+      return res
+        .status(400)
+        .json({ message: "Video not found to add comment" });
     }
     const newComment = new Comment({
       videoId,
       studentId,
-      comment
+      comment,
     });
 
-    const savedComment = await newComment.save();
+    await newComment.save();
     return res.status(201).json({
       success: true,
       message: "Comment added successfully",
-      data: savedComment
+      data: newComment,
     });
-  }catch(error){
+  } catch (error) {
     console.error("Error adding comment:", error);
     return res.status(500).json({
       success: false,
       message: "Server Error. Could not add comment.",
-      error: error.message
+      error: error.message,
     });
   }
 };
 
 //AddReviewForCourse
 export const addReview = async (req, res) => {
-  try{
-    const {courseId, studentId, rating, review} = req.body;
-    if(!courseId || !studentId || !rating || !review){
+  const { courseId, rating, review } = req.body;
+  const studentId = req.user._id;
+  try {
+    if (!courseId || !rating || !review) {
       return res.status(400).json({
         success: false,
-        message: "Please provide all required fields"
+        message: "Please provide all required fields",
       });
     }
-    if(rating < 1 || rating > 5){
+    if(!mongoose.isValidObjectId(courseId)){
+      return res.status(400).json({message:"Invalid Course Id"});
+    }
+    const course = await Course.findById(courseId);
+    if(!course){
+      return res.status(404).json({message:"Course not found to add review"});
+    }
+
+    if(review.length >200){
+      return res.status(400).json({message:"Review text cannot be greater than 200 charcaters"})
+    }
+
+    if (rating < 1 || rating > 5) {
       return res.status(400).json({
         success: false,
-        message: "Rating should be between 1 and 5"
+        message: "Rating should be between 1 and 5",
       });
     }
 
@@ -274,57 +305,77 @@ export const addReview = async (req, res) => {
       courseId,
       studentId,
       rating,
-      review
+      review,
     });
 
     const savedReview = await newReview.save();
     return res.status(201).json({
       success: true,
       message: "Review added successfully",
-      data: savedReview
+      data: savedReview,
     });
-
-  }catch(error){ 
+  } catch (error) {
     console.error("Error adding review:", error);
     return res.status(500).json({
       success: false,
       message: "Server Error. Could not add review.",
-      error: error.message
+      error: error.message,
     });
   }
-}
+};
 
-//Report Content
+
 export const reportContent = async (req, res) => {
-  try{
-    const {type, entityReported, reporterId, reasonToReport, details} = req.body;
-    if(!type || !entityReported || !reporterId || !reasonToReport){
-      return res.status(400).json({
-        success: false,
-        message: "Please provide all required fields"
-      });
+  const reporterId = req.user._id
+  const { type, entityReported, reasonToReport, details } = req.body;
+  try {
+
+    if (!type || !entityReported || !reasonToReport) {
+      return res.status(400).json({ success: false, message: "All fields are required" });
     }
 
-    const allowedTypes = ["Course", "Video", "Comment", "Review", "User", "Educator"];
+    const allowedTypes = ["Course", "Video", "Comment", "Review", "User"];
     const allowedReasons = ["Spam", "Inappropriate", "Hate speech", "Violence", "Other"];
-    if(!allowedTypes.includes(type)){
-      return res.status(400).json({
-        success: false,
-        message: "Invalid type provided"
-      });
+
+    if (!allowedTypes.includes(type) || !allowedReasons.includes(reasonToReport)) {
+      return res.status(400).json({ success: false, message: "Invalid type or reason" });
     }
-    if(!allowedReasons.includes(reasonToReport)){
-      return res.status(400).json({
-        success: false,
-        message: "Invalid reason provided"
-      });
+
+    const typeModels = {
+      User,
+      Course,
+      Video,
+      Comment,
+      Review,
+    };
+
+    const Model = typeModels[type];
+    if (!Model) {
+      return res.status(400).json({ success: false, message: "Invalid entity type" });
     }
+
+    const entityExists = await Model.findById(entityReported);
+    if (!entityExists) {
+      return res.status(404).json({ success: false, message: "Entity not found" });
+    }
+
+    const existingReport = await Report.findOne({
+      type,
+      entityReported,
+      reporterId,
+      resolved: false,
+    });
+
+    if (existingReport) {
+      return res.status(400).json({ success: false, message: "Report already exists for this entity" });
+    }
+
     const newReport = new Report({
       type,
       entityReported,
       reporterId,
       reasonToReport,
-      details
+      details,
     });
 
     const savedReport = await newReport.save();
@@ -332,18 +383,17 @@ export const reportContent = async (req, res) => {
     return res.status(201).json({
       success: true,
       message: "Content reported successfully",
-      data: savedReport
+      data: savedReport,
     });
-
-  }catch(error){
-    console.error("Error reporting content:", error);
+  } catch (error) {
     return res.status(500).json({
       success: false,
       message: "Server Error. Could not report content.",
-      error: error.message
+      error: error.message,
     });
   }
 };
+
 // User notifications
 
 export const getNotifications = async (req, res) => {
@@ -371,36 +421,35 @@ export const getNotifications = async (req, res) => {
 
 // Mark notification as read by ID
 export const markNotificationAsRead = async (req, res) => {
-  try{
+  try {
     const notificationId = req.body.id;
     const notification = await Notification.findById(notificationId);
-    if(!notification){
+    if (!notification) {
       return res.status(404).json({
         success: false,
-        message: "Notification not found"
+        message: "Notification not found",
       });
     }
     notification.read = true;
     await notification.save();
     return res.status(200).json({
       success: true,
-      message: "Notification marked as read"
+      message: "Notification marked as read",
     });
-
-  } catch(error){
+  } catch (error) {
     console.error("Error marking notification as read:", error);
   }
 };
 
-// Mark all notifications as read 
+// Mark all notifications as read
 export const markAllNotificationsAsRead = async (req, res) => {
-  try{
-    await Notification.updateMany({userId: req.user.id}, {read: true});
+  try {
+    await Notification.updateMany({ userId: req.user.id }, { read: true });
     return res.status(200).json({
       success: true,
-      message: "All notifications marked as read"
+      message: "All notifications marked as read",
     });
-  } catch(error){
+  } catch (error) {
     console.error("Error marking all notifications as read:", error);
   }
 };
@@ -475,7 +524,7 @@ export const generateCertificate = async (req, res) => {
       folder: "StudyTube/Certificates",
       public_id: fileName,
     });
-    console.log("Complete uploading")
+    console.log("Complete uploading");
 
     enrollment.certificateUrl = response.secure_url;
     await enrollment.save();

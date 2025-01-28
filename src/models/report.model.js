@@ -7,7 +7,7 @@ const reportedSchema = new mongoose.Schema({
   type: {
     type: String,
     required: true,
-    enum: ["Course", "Video", "Comment","Review", "User", "Educator"] // Allowed types
+    enum: ["Course", "Video", "Comment","Review", "User"] // Allowed types
   },
   // ID of the reported entity
   entityReported: {
@@ -22,7 +22,7 @@ const reportedSchema = new mongoose.Schema({
     ref: 'User', // Reference to the User model
   },
   // Reason for reporting
-  reasonTOReport: {
+  reasonToReport: {
     type: String,
     required: true,
     enum: ["Spam", "Inappropriate", "Hate speech", "Violence", "Other"] // Allowed reasons
