@@ -279,42 +279,81 @@ export const generateCertificate = async (req, res) => {
 
     const page = pdfDoc.getPage(0);
 
-    const studentNameWidth = studentName.length * 13;
-    const courseNameWidth = courseName.length * 11;
+    const studentNameWidth = studentName.length * 10;
+    const courseNameWidth = courseName.length * 7;
 
     const studentNameX = 162 + (602 - 162 - studentNameWidth) / 2;
     const courseNameX = 162 + (602 - 162 - courseNameWidth) / 2;
 
     page.drawText(studentName, {
       x: studentNameX,
-      y: 335,
+      y: 320,
       size: 28,
       color: rgb(240 / 255, 193 / 255, 69 / 255),
     });
 
     page.drawText(courseName, {
       x: courseNameX,
-      y: 250,
-      size: 24,
+      y: 247,
+      size: 20,
       color: rgb(240 / 255, 193 / 255, 69 / 255),
     });
     page.drawText(issueDate, {
-      x: 490,
-      y: 212,
-      size: 16,
+      x: 375,
+      y: 193,
+      size: 18,
       color: rgb(240 / 255, 193 / 255, 69 / 255),
     });
 
     const pdfBytes = await pdfDoc.save();
+    const base64Pdf = Buffer.from(pdfBytes).toString("base64");
 
-    res.setHeader("Content-Type", "application/pdf");
-    res.setHeader(
-      "Content-Disposition",
-      `attachment; filename=certificate-${user._id}.pdf`
-    );
-    return res.send(Buffer.from(pdfBytes));
+    console.log(base64Pdf.length);
+    console.log("uploading");
+
+    const base64PdfWithMimeType = `data:application/pdf;base64,${base64Pdf}`;
+    const fileName = `${user.name}-${courseName}-certificate`;
+
+    const response = await cloudinary.uploader.upload(base64PdfWithMimeType, {
+      folder: "StudyTube/Certificates",
+      public_id: fileName,
+    });
+    console.log("Complete uploading")
+
+    enrollment.certificateUrl = response.secure_url;
+    await enrollment.save();
+
+    return res.status(200).json({
+      message: "Certificate generated and saved successfully",
+      enrollment,
+    });
   } catch (error) {
     console.log(error);
     return res.status(500).json({ message: "Internal server error" });
   }
+};
+
+export const updateProgress = async (req, res) => {
+  const { courseId } = req.body;
+  const user = req.user;
+  try {
+    const enrollment = await Enrollment.findOne({
+      courseId,
+      studentId: user._id,
+    }).populate("courseId");
+    if (!enrollment) {
+      return res.status(400).json({
+        message: "Course enrollment not found",
+      });
+    }
+    const allLectures = enrollment.courseId.lectures.length;
+    let currProgress = enrollment.progress;
+
+    // const completedLectures = (progress/100) * allLectures;
+    const progress = (1 / allLectures) * 100;
+    currProgress += progress;
+    enrollment.progress = currProgress;
+    await enrollment.save();
+    return res.status(200).j.son();
+  } catch (error) {}
 };
