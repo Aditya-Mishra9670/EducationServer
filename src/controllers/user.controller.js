@@ -372,7 +372,7 @@ export const getNotifications = async (req, res) => {
 // Mark notification as read by ID
 export const markNotificationAsRead = async (req, res) => {
   try{
-    const notificationId = req.params.id;
+    const notificationId = req.body.id;
     const notification = await Notification.findById(notificationId);
     if(!notification){
       return res.status(404).json({
