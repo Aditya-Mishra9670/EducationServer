@@ -256,7 +256,7 @@ export const addComment = async (req, res) => {
 //AddReviewForCourse
 export const addReview = async (req, res) => {
   try{
-    const {courseId, studentId, rating, review} = req.body;\
+    const {courseId, studentId, rating, review} = req.body;
     if(!courseId || !studentId || !rating || !review){
       return res.status(400).json({
         success: false,
