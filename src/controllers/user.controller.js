@@ -239,3 +239,26 @@ export const getNotifications = async (req, res) => {
     });
   }
 };
+
+// Mark notification as read by ID
+export const markNotificationAsRead = async (req, res) => {
+  try{
+    const notificationId = req.params.id;
+    const notification = await Notification.findById(notificationId);
+    if(!notification){
+      return res.status(404).json({
+        success: false,
+        message: "Notification not found"
+      });
+    }
+    notification.read = true;
+    await notification.save();
+    return res.status(200).json({
+      success: true,
+      message: "Notification marked as read"
+    });
+
+  } catch(error){
+    console.error("Error marking notification as read:", error);
+  }
+}
