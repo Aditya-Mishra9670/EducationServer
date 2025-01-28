@@ -8,6 +8,9 @@ import bcrypt from "bcryptjs";
 import cloudinary from "../lib/cloud.js";
 import Enrollment from "../models/enrollment.model.js";
 import Review from "../models/review.model.js";
+import Comment from "../models/comment.model.js";
+import Report from "../models/report.model.js";
+
 
 export const updateProfile = async (req, res) => {
   //Only name, Interests and profilePic are updatable
@@ -292,7 +295,55 @@ export const addReview = async (req, res) => {
 }
 
 //Report Content
+export const reportContent = async (req, res) => {
+  try{
+    const {type, entityReported, reporterId, reasonToReport, details} = req.body;
+    if(!type || !entityReported || !reporterId || !reasonToReport){
+      return res.status(400).json({
+        success: false,
+        message: "Please provide all required fields"
+      });
+    }
 
+    const allowedTypes = ["Course", "Video", "Comment", "Review", "User", "Educator"];
+    const allowedReasons = ["Spam", "Inappropriate", "Hate speech", "Violence", "Other"];
+    if(!allowedTypes.includes(type)){
+      return res.status(400).json({
+        success: false,
+        message: "Invalid type provided"
+      });
+    }
+    if(!allowedReasons.includes(reasonToReport)){
+      return res.status(400).json({
+        success: false,
+        message: "Invalid reason provided"
+      });
+    }
+    const newReport = new Report({
+      type,
+      entityReported,
+      reporterId,
+      reasonToReport,
+      details
+    });
+
+    const savedReport = await newReport.save();
+
+    return res.status(201).json({
+      success: true,
+      message: "Content reported successfully",
+      data: savedReport
+    });
+
+  }catch(error){
+    console.error("Error reporting content:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server Error. Could not report content.",
+      error: error.message
+    });
+  }
+};
 // User notifications
 
 export const getNotifications = async (req, res) => {
