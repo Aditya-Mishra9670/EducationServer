@@ -7,6 +7,10 @@ import validator from "validator";
 import bcrypt from "bcryptjs";
 import cloudinary from "../lib/cloud.js";
 import Enrollment from "../models/enrollment.model.js";
+import Review from "../models/review.model.js";
+import Comment from "../models/comment.model.js";
+import Report from "../models/report.model.js";
+
 
 export const updateProfile = async (req, res) => {
   //Only name, Interests and profilePic are updatable
@@ -218,11 +222,128 @@ export const getRecommendedCourses = async (req, res) => {
 };
 
 //AddComment
+export const addComment = async (req, res) => {
+  try{
+    const {videoId, studentId, comment} = req.body;
+    if(!videoId || !studentId || !comment){
+      return res.status(400).json({
+        success: false,
+        message: "Please provide all required fields"
+      });
+    }
+    const newComment = new Comment({
+      videoId,
+      studentId,
+      comment
+    });
+
+    const savedComment = await newComment.save();
+    return res.status(201).json({
+      success: true,
+      message: "Comment added successfully",
+      data: savedComment
+    });
+  }catch(error){
+    console.error("Error adding comment:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server Error. Could not add comment.",
+      error: error.message
+    });
+  }
+};
 
 //AddReviewForCourse
+export const addReview = async (req, res) => {
+  try{
+    const {courseId, studentId, rating, review} = req.body;\
+    if(!courseId || !studentId || !rating || !review){
+      return res.status(400).json({
+        success: false,
+        message: "Please provide all required fields"
+      });
+    }
+    if(rating < 1 || rating > 5){
+      return res.status(400).json({
+        success: false,
+        message: "Rating should be between 1 and 5"
+      });
+    }
+
+    const newReview = new Review({
+      courseId,
+      studentId,
+      rating,
+      review
+    });
+
+    const savedReview = await newReview.save();
+    return res.status(201).json({
+      success: true,
+      message: "Review added successfully",
+      data: savedReview
+    });
+
+  }catch(error){ 
+    console.error("Error adding review:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server Error. Could not add review.",
+      error: error.message
+    });
+  }
+}
 
 //Report Content
+export const reportContent = async (req, res) => {
+  try{
+    const {type, entityReported, reporterId, reasonToReport, details} = req.body;
+    if(!type || !entityReported || !reporterId || !reasonToReport){
+      return res.status(400).json({
+        success: false,
+        message: "Please provide all required fields"
+      });
+    }
 
+    const allowedTypes = ["Course", "Video", "Comment", "Review", "User", "Educator"];
+    const allowedReasons = ["Spam", "Inappropriate", "Hate speech", "Violence", "Other"];
+    if(!allowedTypes.includes(type)){
+      return res.status(400).json({
+        success: false,
+        message: "Invalid type provided"
+      });
+    }
+    if(!allowedReasons.includes(reasonToReport)){
+      return res.status(400).json({
+        success: false,
+        message: "Invalid reason provided"
+      });
+    }
+    const newReport = new Report({
+      type,
+      entityReported,
+      reporterId,
+      reasonToReport,
+      details
+    });
+
+    const savedReport = await newReport.save();
+
+    return res.status(201).json({
+      success: true,
+      message: "Content reported successfully",
+      data: savedReport
+    });
+
+  }catch(error){
+    console.error("Error reporting content:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server Error. Could not report content.",
+      error: error.message
+    });
+  }
+};
 // User notifications
 
 export const getNotifications = async (req, res) => {
@@ -245,6 +366,42 @@ export const getNotifications = async (req, res) => {
       message: "Server Error. Could not fetch notifications.",
       error: error.message,
     });
+  }
+};
+
+// Mark notification as read by ID
+export const markNotificationAsRead = async (req, res) => {
+  try{
+    const notificationId = req.params.id;
+    const notification = await Notification.findById(notificationId);
+    if(!notification){
+      return res.status(404).json({
+        success: false,
+        message: "Notification not found"
+      });
+    }
+    notification.read = true;
+    await notification.save();
+    return res.status(200).json({
+      success: true,
+      message: "Notification marked as read"
+    });
+
+  } catch(error){
+    console.error("Error marking notification as read:", error);
+  }
+};
+
+// Mark all notifications as read 
+export const markAllNotificationsAsRead = async (req, res) => {
+  try{
+    await Notification.updateMany({userId: req.user.id}, {read: true});
+    return res.status(200).json({
+      success: true,
+      message: "All notifications marked as read"
+    });
+  } catch(error){
+    console.error("Error marking all notifications as read:", error);
   }
 };
 
