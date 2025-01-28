@@ -503,7 +503,7 @@ export const updateProgress = async (req, res) => {
         message: "Course enrollment not found",
       });
     }
-    const allLectures = enrollment.courseId.lectures.length;
+    const allLectures = 5 || enrollment.courseId.lectures.length;
     let currProgress = enrollment.progress;
 
     // const completedLectures = (progress/100) * allLectures;
