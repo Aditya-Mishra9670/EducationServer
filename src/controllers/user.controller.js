@@ -218,6 +218,36 @@ export const getRecommendedCourses = async (req, res) => {
 };
 
 //AddComment
+export const addComment = async (req, res) => {
+  try{
+    const {videoId, studentId, comment} = req.body;
+    if(!videoId || !studentId || !comment){
+      return res.status(400).json({
+        success: false,
+        message: "Please provide all required fields"
+      });
+    }
+    const newComment = new Comment({
+      videoId,
+      studentId,
+      comment
+    });
+
+    const savedComment = await newComment.save();
+    return res.status(201).json({
+      success: true,
+      message: "Comment added successfully",
+      data: savedComment
+    });
+  }catch(error){
+    console.error("Error adding comment:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server Error. Could not add comment.",
+      error: error.message
+    });
+  }
+};
 
 //AddReviewForCourse
 
