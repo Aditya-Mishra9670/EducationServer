@@ -7,6 +7,7 @@ import validator from "validator";
 import bcrypt from "bcryptjs";
 import cloudinary from "../lib/cloud.js";
 import Enrollment from "../models/enrollment.model.js";
+import Review from "../models/review.model.js";
 
 export const updateProfile = async (req, res) => {
   //Only name, Interests and profilePic are updatable
@@ -250,6 +251,45 @@ export const addComment = async (req, res) => {
 };
 
 //AddReviewForCourse
+export const addReview = async (req, res) => {
+  try{
+    const {courseId, studentId, rating, review} = req.body;\
+    if(!courseId || !studentId || !rating || !review){
+      return res.status(400).json({
+        success: false,
+        message: "Please provide all required fields"
+      });
+    }
+    if(rating < 1 || rating > 5){
+      return res.status(400).json({
+        success: false,
+        message: "Rating should be between 1 and 5"
+      });
+    }
+
+    const newReview = new Review({
+      courseId,
+      studentId,
+      rating,
+      review
+    });
+
+    const savedReview = await newReview.save();
+    return res.status(201).json({
+      success: true,
+      message: "Review added successfully",
+      data: savedReview
+    });
+
+  }catch(error){ 
+    console.error("Error adding review:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server Error. Could not add review.",
+      error: error.message
+    });
+  }
+}
 
 //Report Content
 
