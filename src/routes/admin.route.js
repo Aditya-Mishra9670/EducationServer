@@ -10,6 +10,6 @@ router.post('/createNotification',createNotification);
 router.delete('/removeUser',deleteUserbyId);
 router.get('/reports',getReports);
 router.get('/specificReport',getReportedContent);
-router.post('reviewReport',reviewReport);
+router.post('/reviewReport',reviewReport);
 
 export default router;
