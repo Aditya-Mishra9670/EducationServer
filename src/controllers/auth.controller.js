@@ -80,10 +80,10 @@ export const login = async (req, res) => {
     }
 
     //Generating JWT token for page protection so that no one can go forward without login using urls
-    generateAuthToken(userExistance._id,res);
+    //await generateAuthToken(userExistance._id,res);
 
     //Send Login activity mail here.
-    sendLoginActivityMail(userExistance.email, userExistance.name);
+    //await sendLoginActivityMail(userExistance.email, userExistance.name);
 
     //successful response
     return res.status(200).json({

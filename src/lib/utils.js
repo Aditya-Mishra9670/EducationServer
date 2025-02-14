@@ -8,9 +8,9 @@ dotenv.config();
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: process.env.MAIL,
-    pass: process.env.MAIL_PASSWORD,
-  },
+    user: process.env.EMAIL_USER, // Your email address
+    pass: process.env.EMAIL_PASS  // Your email password or app-specific password
+  }
 });
 
 //For Cookies
@@ -30,7 +30,7 @@ export const generateAuthToken = async (userId, res) => {
 
 export const sendWelcomeMail = async (email, name) => {
   const mailContent = {
-    from: "StudyTube <no-reply@studytube.com>",
+    from: process.env.EMAIL_USER,
     to: email,
     subject: "Welcome to StudyTube!",
     html: `

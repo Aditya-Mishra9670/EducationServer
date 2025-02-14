@@ -4,7 +4,7 @@
   "description": "backend for education server",
   "main": "index.js",
   "scripts": {
-    "start": "node src/inedx.js",
+    "start": "node src/index.js",
     "dev": "nodemon src/index.js"
   },
   "keywords": [
