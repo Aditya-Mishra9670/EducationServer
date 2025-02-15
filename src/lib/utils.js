@@ -30,7 +30,7 @@ export const generateAuthToken = async (userId, res) => {
 
 export const sendWelcomeMail = async (email, name) => {
   const mailContent = {
-    from: process.env.EMAIL_USER,
+    from: "StudyTube <no-reply@studytube.com>",
     to: email,
     subject: "Welcome to StudyTube!",
     html: `

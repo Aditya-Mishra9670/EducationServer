@@ -10,7 +10,7 @@ dotenv.config();
 
 const app = express();
 app.use(cors({
-    origin: ['http://localhost:8000'],
+    origin: ['http://localhost:8000','http://localhost:5173'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE','PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization']
@@ -27,7 +27,6 @@ app.use('/user',checkAuth,userRouter);
 app.use('/teacher',checkAuth,checkTeacherAuth,teacherRouter);
 
 app.use('/admin',checkAuth,checkAdminAuth,adminRouter);
-// app.use('/admin',adminRouter);
 
 app.listen(process.env.PORT, () => {
     connectDB();

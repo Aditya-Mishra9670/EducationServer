@@ -542,24 +542,41 @@ export const generateCertificate = async (req, res) => {
 export const updateProgress = async (req, res) => {
   const { courseId } = req.body;
   const user = req.user;
+
   try {
     const enrollment = await Enrollment.findOne({
       courseId,
       studentId: user._id,
     }).populate("courseId");
+
     if (!enrollment) {
       return res.status(400).json({
         message: "Course enrollment not found",
       });
     }
-    const allLectures = 5 || enrollment.courseId.lectures.length;
+
+    const allLectures = enrollment.courseId.lectures.length;
     let currProgress = enrollment.progress;
 
-    // const completedLectures = (progress/100) * allLectures;
-    const progress = (1 / allLectures) * 100;
-    currProgress += progress;
+    // Incremental progress update per lecture
+    const progressIncrement = 100 / allLectures;
+    currProgress += progressIncrement;
+
+    // Ensure progress doesn't exceed 100%
+    currProgress = Math.min(currProgress, 100);
+
     enrollment.progress = currProgress;
     await enrollment.save();
-    return res.status(200).j.son();
-  } catch (error) {}
+
+    return res.status(200).json({
+      message: "Progress updated successfully",
+      progress: currProgress,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      message: "An error occurred while updating progress.",
+    });
+  }
 };
+
