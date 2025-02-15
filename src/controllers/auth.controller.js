@@ -79,14 +79,15 @@ export const login = async (req, res) => {
       return res.status(401).json({ message: "Invalid Credentials" });
     }
 
-    //Generating JWT token for page protection so that no one can go forward without login using urls
-    //await generateAuthToken(userExistance._id,res);
+    // Generating JWT token for page protection so that no one can go forward without login using urls
+    generateAuthToken(userExistance._id,res);
 
     //Send Login activity mail here.
     //await sendLoginActivityMail(userExistance.email, userExistance.name);
 
     //successful response
     return res.status(200).json({
+      data:userExistance,
       message: "Login Successful!",
     });
   } catch (error) {
