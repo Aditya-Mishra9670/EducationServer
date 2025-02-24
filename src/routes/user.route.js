@@ -4,10 +4,10 @@ import {
   addComment,
   addReview,
   generateCertificate,
+  getAllCourses,
   getEnrolled,
   getMyCourses,
   getNotifications,
-  getRecommendedCourses,
   markAllNotificationsAsRead,
   markNotificationAsRead,
   reportContent,
@@ -25,7 +25,7 @@ router.post("/update-pass", updatePass);
 router.post("/enroll/:courseId", getEnrolled);
 router.post("/abandon/:courseId", abandonCourse);
 router.get("/myCourses", getMyCourses);
-router.get("/recommendation", getRecommendedCourses);
+router.get("/allCourses", getAllCourses);
 
 // Review and comment routes
 router.post("/add-comment", addComment);

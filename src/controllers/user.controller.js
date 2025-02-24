@@ -91,34 +91,15 @@ export const getEnrolled = async (req, res) => {
 export const getMyCourses = async (req, res) => {
   const user = req.user;
   try {
-    const page = parseInt(req.query.page, 10) || 1;
-    const limit = parseInt(req.query.limit, 10) || 10;
-    const skip = (page - 1) * limit;
-
-    const [courses, totalCourses] = await Promise.all([
-      Enrollment.find({ studentId: user._id }).skip(skip).limit(limit),
-      Enrollment.countDocuments({ studentId: user._id }),
-    ]);
-
-    return res.status(200).json({
-      message: "Courses fetched successfully",
-      data: courses,
-      pagination: {
-        total: totalCourses,
-        page,
-        pages: Math.ceil(totalCourses / limit),
-      },
-    });
+    const res = await Enrollment.find({ studentId: user._id }).populate(
+      "courseId"
+    );
+    return res.status(200).json({ data: res });
   } catch (error) {
-    const status =
-      error.name === "CastError" || error.name === "ValidationError"
-        ? 400
-        : 500;
-    return res.status(status).json({
-      message:
-        status === 400 ? "Invalid request data" : "Internal server error",
-      error: error.message,
-    });
+    console.log("Error in finding my courses",error);
+    return res.status(500).json({
+      message:"Internal Server error"
+    })
   }
 };
 
@@ -178,50 +159,24 @@ export const updatePass = async (req, res) => {
   }
 };
 
-export const getRecommendedCourses = async (req, res) => {
+export const getAllCourses = async (req, res) => {
   try {
-    const { interests } = req.user;
-    if (!interests || interests.length === 0) {
-      return res
-        .status(400)
-        .json({ message: "User interests are missing or empty" });
+    const courses = await Course.find().populate("teacherId","name profilePic");
+    console.log(courses);
+    if (!courses.length) {
+      return res.status(404).json({ message: "No courses found" });
     }
 
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const skip = (page - 1) * limit;
-
-    const courses = await Course.find({ category: { $in: interests } })
-      .skip(skip)
-      .limit(limit);
-
-    const totalCourses = await Course.countDocuments({
-      category: { $in: interests },
-    });
-
-    if (courses.length === 0) {
-      return res.status(404).json({ message: "No courses found yet" });
-    }
-
-    return res.status(200).json({
-      message: "Recommended courses fetched",
-      data: courses,
-      pagination: {
-        total: totalCourses,
-        page,
-        pages: Math.ceil(totalCourses / limit),
-      },
-    });
+    return res.status(200).json({ message: "Courses fetched", data: courses });
   } catch (error) {
-    if (error.name === "CastError" || error.name === "ValidationError") {
-      return res
-        .status(400)
-        .json({ message: "Invalid request data", error: error.message });
-    }
-    console.log("Error in fetching recommended courses,", error);
-    return res.status(500).json({ message: "Internal server error" });
+    const status = ["CastError", "ValidationError"].includes(error.name) ? 400 : 500;
+    return res.status(status).json({
+      message: status === 400 ? "Invalid request data" : "Internal server error",
+      error: error.message,
+    });
   }
 };
+
 
 
 //AddComment
@@ -395,7 +350,6 @@ export const reportContent = async (req, res) => {
 };
 
 // User notifications
-
 export const getNotifications = async (req, res) => {
   try {
     const notifications = await Notification.find({ userId: req.user.id });
