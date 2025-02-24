@@ -162,7 +162,6 @@ export const updatePass = async (req, res) => {
 export const getAllCourses = async (req, res) => {
   try {
     const courses = await Course.find().populate("teacherId","name profilePic");
-    console.log(courses);
     if (!courses.length) {
       return res.status(404).json({ message: "No courses found" });
     }
@@ -468,8 +467,6 @@ export const generateCertificate = async (req, res) => {
     const pdfBytes = await pdfDoc.save();
     const base64Pdf = Buffer.from(pdfBytes).toString("base64");
 
-    console.log(base64Pdf.length);
-    console.log("uploading");
 
     const base64PdfWithMimeType = `data:application/pdf;base64,${base64Pdf}`;
     const fileName = `${user.name}-${courseName}-certificate`;
@@ -478,7 +475,6 @@ export const generateCertificate = async (req, res) => {
       folder: "StudyTube/Certificates",
       public_id: fileName,
     });
-    console.log("Complete uploading");
 
     enrollment.certificateUrl = response.secure_url;
     await enrollment.save();
