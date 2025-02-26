@@ -13,7 +13,6 @@ import Report from "../models/report.model.js";
 import Video from "../models/video.model.js";
 import User from "../models/user.model.js";
 
-
 export const updateProfile = async (req, res) => {
   //Only name, Interests and profilePic are updatable
   const { name, interests, profilePic } = req.body;
@@ -50,6 +49,75 @@ export const updateProfile = async (req, res) => {
     });
   } catch (error) {
     console.log("Error in updating profile", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const getVideo = async (req, res) => {
+  const { videoId } = req.params;
+  try {
+    if (!mongoose.isValidObjectId(videoId)) {
+      return res.status(400).json({ message: "Invalid video Id" });
+    }
+    const data = await Video.findById(videoId);
+    if (!data) {
+      return res.status(404).json({ message: "Video not found" });
+    }
+    return res.status(200).json({ data });
+  } catch (error) {
+    console.log("Error in getting video details", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const getCourse = async (req, res) => {
+  const { courseId } = req.params;
+  try {
+    if (!mongoose.isValidObjectId(courseId)) {
+      return res.status(400).json({ message: "Invalid course Id" });
+    }
+    const course = await Course.findById(courseId).populate(
+      "teacherId",
+      "profilePic name"
+    );
+    if (!course) {
+      return res.status(404).json({ message: "Course not found" });
+    }
+    return res.status(200).json({ data: course });
+  } catch (error) {
+    console.log("Error in getting course details", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+export const getSimilarVideos = async (req, res) => {
+  const { videoId } = req.params;
+  try {
+    if (!mongoose.isValidObjectId(videoId)) {
+      return res.status(400).json({ message: "Invalid video Id" });
+    }
+
+    const video = await Video.findById(videoId);
+    if (!video) {
+      return res.status(404).json({ message: "Video not found" });
+    }
+
+    const similarVideos = await Video.find({
+      courseId: video.courseId,
+      _id: { $ne: videoId },
+    })
+      .sort({ _id: 1 })
+      .limit(5);
+
+    if (similarVideos.length === 0) {
+      return res
+        .status(200)
+        .json({ data: await Video.find({ _id: { $ne: videoId } }) });
+    }
+
+    return res.status(200).json({ data: similarVideos });
+  } catch (error) {
+    console.log("Error in getting similar videos", error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -91,15 +159,15 @@ export const getEnrolled = async (req, res) => {
 export const getMyCourses = async (req, res) => {
   const user = req.user;
   try {
-    const res = await Enrollment.find({ studentId: user._id }).populate(
+    const enrollments = await Enrollment.find({ studentId: user._id }).populate(
       "courseId"
     );
-    return res.status(200).json({ data: res });
+    return res.status(200).json({ data: enrollments });
   } catch (error) {
-    console.log("Error in finding my courses",error);
+    console.log("Error in finding my courses", error);
     return res.status(500).json({
-      message:"Internal Server error"
-    })
+      message: "Internal Server Error",
+    });
   }
 };
 
@@ -161,22 +229,60 @@ export const updatePass = async (req, res) => {
 
 export const getAllCourses = async (req, res) => {
   try {
-    const courses = await Course.find().populate("teacherId","name profilePic");
+    const courses = await Course.find().populate(
+      "teacherId",
+      "name profilePic"
+    );
     if (!courses.length) {
       return res.status(404).json({ message: "No courses found" });
     }
 
     return res.status(200).json({ message: "Courses fetched", data: courses });
   } catch (error) {
-    const status = ["CastError", "ValidationError"].includes(error.name) ? 400 : 500;
+    const status = ["CastError", "ValidationError"].includes(error.name)
+      ? 400
+      : 500;
     return res.status(status).json({
-      message: status === 400 ? "Invalid request data" : "Internal server error",
+      message:
+        status === 400 ? "Invalid request data" : "Internal server error",
       error: error.message,
     });
   }
 };
 
+export const getComments = async (req, res) => {
+  const { videoId } = req.params;
+  try {
+    if (!mongoose.isValidObjectId(videoId)) {
+      return res.status(400).json({ message: "Invalid video Id" });
+    }
+    const comments = await Comment.find({ videoId }).populate(
+      "studentId",
+      "name profilePic"
+    );
+    return res.status(200).json({ data: comments });
+  } catch (error) {
+    console.log("Error in getting comments", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
 
+export const getReviews = async (req, res) => {
+  const { courseId } = req.params;
+  try {
+    if (!mongoose.isValidObjectId(courseId)) {
+      return res.status(400).json({ message: "Invalid course Id" });
+    }
+    const reviews = await Review.find({ courseId }).populate(
+      "studentId",
+      "name profilePic"
+    );
+    return res.status(200).json({ data: reviews });
+  } catch (error) {
+    console.log("Error in getting reviews", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
 
 //AddComment
 export const addComment = async (req, res) => {
@@ -189,8 +295,8 @@ export const addComment = async (req, res) => {
         message: "Please provide all required fields",
       });
     }
-    if(!mongoose.isValidObjectId(videoId)){
-      return res.status(400).json({message:"Invalid video Id"})
+    if (!mongoose.isValidObjectId(videoId)) {
+      return res.status(400).json({ message: "Invalid video Id" });
     }
     if (comment.length > 200) {
       return res
@@ -236,16 +342,31 @@ export const addReview = async (req, res) => {
         message: "Please provide all required fields",
       });
     }
-    if(!mongoose.isValidObjectId(courseId)){
-      return res.status(400).json({message:"Invalid Course Id"});
+    if (!mongoose.isValidObjectId(courseId)) {
+      return res.status(400).json({ message: "Invalid Course Id" });
     }
     const course = await Course.findById(courseId);
-    if(!course){
-      return res.status(404).json({message:"Course not found to add review"});
+    if (!course) {
+      return res
+        .status(404)
+        .json({ message: "Course not found to add review" });
     }
 
-    if(review.length >200){
-      return res.status(400).json({message:"Review text cannot be greater than 200 charcaters"})
+    const exisitingReview = await Review.findOne({
+      courseId,
+      studentId,
+    });
+
+    if (exisitingReview) {
+      return res
+        .status(400)
+        .json({ message: "Review already exists for this course" });
+    }
+
+    if (review.length > 200) {
+      return res
+        .status(400)
+        .json({ message: "Review text cannot be greater than 200 charcaters" });
     }
 
     if (rating < 1 || rating > 5) {
@@ -278,21 +399,32 @@ export const addReview = async (req, res) => {
   }
 };
 
-
 export const reportContent = async (req, res) => {
-  const reporterId = req.user._id
+  const reporterId = req.user._id;
   const { type, entityReported, reasonToReport, details } = req.body;
   try {
-
     if (!type || !entityReported || !reasonToReport) {
-      return res.status(400).json({ success: false, message: "All fields are required" });
+      return res
+        .status(400)
+        .json({ success: false, message: "All fields are required" });
     }
 
     const allowedTypes = ["Course", "Video", "Comment", "Review", "User"];
-    const allowedReasons = ["Spam", "Inappropriate", "Hate speech", "Violence", "Other"];
+    const allowedReasons = [
+      "Spam",
+      "Inappropriate",
+      "Hate speech",
+      "Violence",
+      "Other",
+    ];
 
-    if (!allowedTypes.includes(type) || !allowedReasons.includes(reasonToReport)) {
-      return res.status(400).json({ success: false, message: "Invalid type or reason" });
+    if (
+      !allowedTypes.includes(type) ||
+      !allowedReasons.includes(reasonToReport)
+    ) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid type or reason" });
     }
 
     const typeModels = {
@@ -305,12 +437,16 @@ export const reportContent = async (req, res) => {
 
     const Model = typeModels[type];
     if (!Model) {
-      return res.status(400).json({ success: false, message: "Invalid entity type" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid entity type" });
     }
 
     const entityExists = await Model.findById(entityReported);
     if (!entityExists) {
-      return res.status(404).json({ success: false, message: "Entity not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Entity not found" });
     }
 
     const existingReport = await Report.findOne({
@@ -321,7 +457,10 @@ export const reportContent = async (req, res) => {
     });
 
     if (existingReport) {
-      return res.status(400).json({ success: false, message: "Report already exists for this entity" });
+      return res.status(400).json({
+        success: false,
+        message: "Report already exists for this entity",
+      });
     }
 
     const newReport = new Report({
@@ -467,7 +606,6 @@ export const generateCertificate = async (req, res) => {
     const pdfBytes = await pdfDoc.save();
     const base64Pdf = Buffer.from(pdfBytes).toString("base64");
 
-
     const base64PdfWithMimeType = `data:application/pdf;base64,${base64Pdf}`;
     const fileName = `${user.name}-${courseName}-certificate`;
 
@@ -529,4 +667,3 @@ export const updateProgress = async (req, res) => {
     });
   }
 };
-

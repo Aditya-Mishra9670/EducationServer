@@ -5,9 +5,14 @@ import {
   addReview,
   generateCertificate,
   getAllCourses,
+  getComments,
+  getCourse,
   getEnrolled,
   getMyCourses,
   getNotifications,
+  getReviews,
+  getSimilarVideos,
+  getVideo,
   markAllNotificationsAsRead,
   markNotificationAsRead,
   reportContent,
@@ -20,6 +25,13 @@ const router = express.Router();
 // Profile routes
 router.post("/update-profile", updateProfile);
 router.post("/update-pass", updatePass);
+
+//video and Course routes
+router.get("/video/:videoId", getVideo);
+router.get("/course/:courseId", getCourse);
+router.get("/similarVideos/:videoId", getSimilarVideos);
+router.get("/getComments/:videoId",getComments);
+router.get("/getReviews/:courseId",getReviews);
 
 // Course enrollment routes
 router.post("/enroll/:courseId", getEnrolled);
