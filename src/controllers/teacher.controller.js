@@ -102,12 +102,11 @@ export const editCourse = async (req, res) => {
 };
 
 export const uploadVideo = async (req, res) => {
-  const { title, description, thumbnail, file, courseId } = req.body;
-
+  const { title, description, duration, thumbnail, file, courseId } = req.body;
   const user = req.user;
 
   try {
-    if (!courseId || !title || !description || !thumbnail || !file) {
+    if (!courseId || !title || !description || !thumbnail  || !duration || !file) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -124,20 +123,14 @@ export const uploadVideo = async (req, res) => {
       folder: "StudyTube/Lectures/thumbnail",
     });
     const thumbnailUrl = response.secure_url;
-    const uploadedFile = await cloudinary.uploader.upload(file, {
-      folder: "StudyTube/Lectures/videos",
-    });
-
-    const videoUrl = uploadedFile.secure_url;
-    const videoDuration = uploadedFile.duration;
 
     const video = new Video({
       title,
       description,
-      url: videoUrl,
+      url: file,
       courseId,
       thumbnail: thumbnailUrl,
-      duration: videoDuration,
+      duration,
     });
 
     await video.save();
