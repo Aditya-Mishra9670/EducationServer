@@ -194,9 +194,10 @@ export const getMyCourses = async (req, res) => {
     const enrollments = await Enrollment.find({ studentId: user._id }).populate(
       {
         path: "courseId",
-        populate: {
-          path: "lectures",
-        },
+        populate: [
+          { path: "lectures" },
+          { path: "teacherId", select: "name profilePic" },
+        ],
       }
     );
 
