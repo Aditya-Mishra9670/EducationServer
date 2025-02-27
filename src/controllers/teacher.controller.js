@@ -132,7 +132,7 @@ export const uploadVideo = async (req, res) => {
       thumbnail: thumbnailUrl,
       duration,
     });
-
+    await course.updateOne({ $push: { videos: video._id } });
     await video.save();
 
     return res

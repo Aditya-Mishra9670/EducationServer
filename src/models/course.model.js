@@ -40,10 +40,8 @@ const courseSchema = mongoose.Schema(
 
     lectures: [
       {
-        _id: mongoose.Schema.Types.ObjectId, // Unique ID for each lecture
-        title: { type: String, required: true },
-        duration: { type: Number, required: true }, 
-        videoUrl: { type: String, required: true }, 
+        type: mongoose.Schema.Types.ObjectId,
+        ref:'Video'
       },
     ],
     

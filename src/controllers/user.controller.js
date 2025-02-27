@@ -76,10 +76,13 @@ export const getCourse = async (req, res) => {
     if (!mongoose.isValidObjectId(courseId)) {
       return res.status(400).json({ message: "Invalid course Id" });
     }
-    const course = await Course.findById(courseId).populate(
-      "teacherId",
-      "profilePic name"
-    );
+    const course = await Course.findById(courseId)
+      .populate({
+        path: "teacherId",
+        select: "profilePic name",
+      })
+      .populate("lectures");
+
     if (!course) {
       return res.status(404).json({ message: "Course not found" });
     }
@@ -156,12 +159,47 @@ export const getEnrolled = async (req, res) => {
   }
 };
 
+export const getSpecificEnrollment = async (req, res) => {
+  const { courseId } = req.params;
+  const user = req.user;
+  try {
+    if (!courseId || !mongoose.isValidObjectId(courseId)) {
+      return res.status(400).json({ message: "Invalid course ID" });
+    }
+
+    const enrollment = await Enrollment.findOne({
+      studentId: user._id,
+      courseId,
+    }).populate({
+      path: "courseId",
+      populate: {
+        path: "lectures",
+      },
+    });
+
+    if (!enrollment) {
+      return res.status(404).json({ message: "Not enrolled in course" });
+    }
+
+    return res.status(200).json({ data: enrollment });
+  } catch (error) {
+    console.log("Error in finding specific enrollment", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 export const getMyCourses = async (req, res) => {
   const user = req.user;
   try {
     const enrollments = await Enrollment.find({ studentId: user._id }).populate(
-      "courseId"
+      {
+        path: "courseId",
+        populate: {
+          path: "lectures",
+        },
+      }
     );
+
     return res.status(200).json({ data: enrollments });
   } catch (error) {
     console.log("Error in finding my courses", error);

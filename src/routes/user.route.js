@@ -12,6 +12,7 @@ import {
   getNotifications,
   getReviews,
   getSimilarVideos,
+  getSpecificEnrollment,
   getVideo,
   markAllNotificationsAsRead,
   markNotificationAsRead,
@@ -29,6 +30,7 @@ router.post("/update-pass", updatePass);
 //video and Course routes
 router.get("/video/:videoId", getVideo);
 router.get("/course/:courseId", getCourse);
+router.get("/specificEnrollment/:courseId",getSpecificEnrollment)
 router.get("/similarVideos/:videoId", getSimilarVideos);
 router.get("/getComments/:videoId",getComments);
 router.get("/getReviews/:courseId",getReviews);
