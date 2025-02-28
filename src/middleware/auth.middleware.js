@@ -16,7 +16,7 @@ export const checkAuth = async (req, res, next) => {
     }
 
     const user = await User.findById(decodedToken.userId).select(
-      "-password -resetPassToken -resetPassExpire"
+      " -resetPassToken -resetPassExpire"
     );
 
     if (!user) {

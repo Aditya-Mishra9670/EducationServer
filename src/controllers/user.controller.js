@@ -246,19 +246,37 @@ export const abandonCourse = async (req, res) => {
   }
 };
 
+
 export const updatePass = async (req, res) => {
-  const { newPassword } = req.body;
+  const { newPassword, oldPassword } = req.body;
+  console.log(newPassword,oldPassword)
+  const user = req.user;
+
+  console.log(user);
+
   try {
+    if (!newPassword || !oldPassword) {
+      return res
+        .status(400)
+        .json({ message: "Please provide all required fields" });
+    }
+
+    const validOldPass = await bcrypt.compare(oldPassword, user.password);
+    if (!validOldPass) {
+      return res.status(400).json({ message: "Incorrect old password" });
+    }
+
     if (!validator.isStrongPassword(newPassword)) {
       return res.status(400).json({
         message:
-          "Password should be atleast 8 characters long and should contain atleast 1 uppercase, 1 lowercase, 1 number and 1 special character",
+          "Password should be at least 8 characters long and contain at least 1 uppercase, 1 lowercase, 1 number, and 1 special character",
       });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
     user.password = hashedPassword;
     await user.save();
+
     return res.status(200).json({ message: "Password updated successfully" });
   } catch (error) {
     console.log("Error in updating password", error);
@@ -706,3 +724,32 @@ export const updateProgress = async (req, res) => {
     });
   }
 };
+
+export const getMyReports = async(req,res)=>{
+  const user = req.user;
+  try {
+    const reports = await Report.find({reporterId:user._id}).populate('entityReported');
+    return res.status(200).json({data:reports});
+  } catch (error) {
+    console.log("Error in getting reports",error);
+    return res.status(500).json({message:"Internal server error"});
+  }
+}
+
+export const getReportById = async(req,res)=>{
+  const {reportId} = req.params;
+  try {
+    if(!mongoose.isValidObjectId(reportId)){
+      return res.status(400).json({message:"Invalid report ID"});
+    }
+    const report = await Report.findById(reportId).populate('entityReported');
+    if(!report){
+      return res.status(404).json({message:"Report not found"});
+    }
+    return res.status(200).json({data:report});
+  }
+  catch (error) {
+    console.log("Error in getting report by ID",error);
+    return res.status(500).json({message:"Internal server error"});
+  }
+}

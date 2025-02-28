@@ -9,7 +9,9 @@ import {
   getCourse,
   getEnrolled,
   getMyCourses,
+  getMyReports,
   getNotifications,
+  getReportById,
   getReviews,
   getSimilarVideos,
   getSpecificEnrollment,
@@ -47,6 +49,8 @@ router.post("/add-review", addReview);
 
 // Report content route
 router.post("/report-content", reportContent);
+router.get("/myReports",getMyReports);
+router.get("/report/:reportId",getReportById);
 
 // Notification routes
 router.get("/notifications", getNotifications);
