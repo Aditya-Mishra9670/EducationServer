@@ -30,6 +30,14 @@ export const checkAuth = async (req, res, next) => {
   }
 };
 
+export const checkStudentAuth = async(req,res,next)=>{
+  const user = req.user;
+  if(user.role !== "student"){
+    return res.status(401).json({message:"You are not authorized to access this route"});
+  }
+  next();
+}
+
 export const checkTeacherAuth = async(req,res,next)=>{
   const user = req.user;
   if(user.role !== "teacher"){
