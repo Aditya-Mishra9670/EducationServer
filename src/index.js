@@ -10,6 +10,10 @@ import { getAllData } from './controllers/database.controller.js';
 dotenv.config();
 
 const app = express();
+
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+
 app.use(cors({
     origin: ['http://localhost:8000','http://localhost:5173'],
     credentials: true,

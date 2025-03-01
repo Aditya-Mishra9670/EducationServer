@@ -54,6 +54,10 @@ export const editCourse = async (req, res) => {
     req.body;
   const user = req.user;
 
+  if (!mongoose.isValidObjectId(courseId)) {
+    return res.status(400).json({ message: "Invalid course Id" });
+  }
+
   try {
     if (
       !courseId ||
@@ -104,9 +108,19 @@ export const editCourse = async (req, res) => {
 export const uploadVideo = async (req, res) => {
   const { title, description, duration, thumbnail, file, courseId } = req.body;
   const user = req.user;
+  if (!mongoose.isValidObjectId(courseId)) {
+    return res.status(400).json({ message: "Invalid course Id" });
+  }
 
   try {
-    if (!courseId || !title || !description || !thumbnail  || !duration || !file) {
+    if (
+      !courseId ||
+      !title ||
+      !description ||
+      !thumbnail ||
+      !duration ||
+      !file
+    ) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -132,7 +146,9 @@ export const uploadVideo = async (req, res) => {
       thumbnail: thumbnailUrl,
       duration,
     });
-    await course.updateOne({ $push: { videos: video._id } });
+    course.lectures.push(video._id);
+    await course.save();
+
     await video.save();
 
     return res
@@ -146,7 +162,7 @@ export const uploadVideo = async (req, res) => {
 
 export const editVideo = async (req, res) => {
   //only description,thumbnail are editable
-  const { thumbnail, description } = req.body;
+  const { thumbnail, description, title } = req.body;
   const { videoId } = req.params;
   try {
     if (!mongoose.isValidObjectId(videoId)) {
@@ -155,19 +171,19 @@ export const editVideo = async (req, res) => {
     if (!thumbnail && !description) {
       return res.status(400).json({ message: "Atleast one feild is required" });
     }
-    const video = Video.findById(videoId);
+    const video = await Video.findById(videoId);
     if (!video) {
       return res.status(404).json({ message: "Video doesn't exist" });
     }
     const courseId = video.courseId;
-    const course = Course.findById(courseId);
+    const course = await Course.findById(courseId);
 
     if (!course) {
       return res
         .status(404)
         .json({ message: "Course not found to publish video" });
     }
-    if (course.teacherId.toString() !== req.user._id.toString()) {
+    if (course?.teacherId?.toString() !== req.user._id.toString()) {
       return res.status(401).json({
         message: "Unauthorised , can't make changes to other's videos",
       });
@@ -180,6 +196,7 @@ export const editVideo = async (req, res) => {
       });
       video.thumbnail = response.secure_url;
     }
+    if (title) video.title = title;
 
     await video.save();
     return res
@@ -191,4 +208,42 @@ export const editVideo = async (req, res) => {
   }
 };
 
+export const getMyCourses = async (req, res) => {
+  const user = req.user;
+  try {
+    const courses = await Course.find({ teacherId: user._id })
+      .populate("enrolledStudents", "profilePic name")
+      .populate("lectures");
+    if (!courses.length) {
+      return res.status(400).json({ message: "No course found" });
+    }
+    return res.status(200).json({ data: courses });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      message: "Internal Server Error",
+    });
+  }
+};
 
+export const getSpecificCourse = async (req, res) => {
+  const { courseId } = req.params;
+  if (!mongoose.isValidObjectId(courseId)) {
+    return res.status(400).json({ message: "Invalid course Id" });
+  }
+  try {
+    const course = await Course.findById(courseId)
+      .populate("enrolledStudents", "profilePic name")
+      .populate("lectures");
+
+    if (!course) {
+      return res
+        .status(404)
+        .json({ message: "No course found with specific id" });
+    }
+    return res.status(200).json({ data: course });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
