@@ -13,6 +13,42 @@ import Report from "../models/report.model.js";
 import Video from "../models/video.model.js";
 import User from "../models/user.model.js";
 
+export const updatePass = async (req, res) => {
+  const { newPassword, oldPassword } = req.body;
+  console.log(newPassword,oldPassword)
+  const user = req.user;
+
+  console.log(user);
+
+  try {
+    if (!newPassword || !oldPassword) {
+      return res
+        .status(400)
+        .json({ message: "Please provide all required fields" });
+    }
+
+    const validOldPass = await bcrypt.compare(oldPassword, user.password);
+    if (!validOldPass) {
+      return res.status(400).json({ message: "Incorrect old password" });
+    }
+
+    if (!validator.isStrongPassword(newPassword)) {
+      return res.status(400).json({
+        message:
+          "Password should be at least 8 characters long and contain at least 1 uppercase, 1 lowercase, 1 number, and 1 special character",
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    await user.save();
+
+    return res.status(200).json({ message: "Password updated successfully" });
+  } catch (error) {
+    console.log("Error in updating password", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
 export const updateProfile = async (req, res) => {
   //Only name, Interests and profilePic are updatable
   const { name, interests, profilePic } = req.body;
@@ -39,7 +75,7 @@ export const updateProfile = async (req, res) => {
       });
       user.profilePic = response.secure_url;
     }
-
+    
     await user.save();
 
     res.status(200).json({
@@ -243,44 +279,6 @@ export const abandonCourse = async (req, res) => {
     return res
       .status(500)
       .json({ message: "Internal server error", error: error.message });
-  }
-};
-
-
-export const updatePass = async (req, res) => {
-  const { newPassword, oldPassword } = req.body;
-  console.log(newPassword,oldPassword)
-  const user = req.user;
-
-  console.log(user);
-
-  try {
-    if (!newPassword || !oldPassword) {
-      return res
-        .status(400)
-        .json({ message: "Please provide all required fields" });
-    }
-
-    const validOldPass = await bcrypt.compare(oldPassword, user.password);
-    if (!validOldPass) {
-      return res.status(400).json({ message: "Incorrect old password" });
-    }
-
-    if (!validator.isStrongPassword(newPassword)) {
-      return res.status(400).json({
-        message:
-          "Password should be at least 8 characters long and contain at least 1 uppercase, 1 lowercase, 1 number, and 1 special character",
-      });
-    }
-
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-    user.password = hashedPassword;
-    await user.save();
-
-    return res.status(200).json({ message: "Password updated successfully" });
-  } catch (error) {
-    console.log("Error in updating password", error);
-    return res.status(500).json({ message: "Internal server error" });
   }
 };
 

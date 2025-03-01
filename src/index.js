@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import { connectDB } from './lib/db.js';
 import {authRouter, userRouter,teacherRouter, adminRouter} from "./routes/routes.js"
-import { checkAdminAuth, checkAuth, checkTeacherAuth } from './middleware/auth.middleware.js';
+import { checkAdminAuth, checkAuth, checkStudentAuth, checkTeacherAuth } from './middleware/auth.middleware.js';
 import { getAllData } from './controllers/database.controller.js';
 
 dotenv.config();
@@ -25,7 +25,7 @@ app.use('/auth',authRouter);
 
 app.use('/about',getAllData);
 
-app.use('/user',checkAuth,userRouter);
+app.use('/user',checkAuth,checkStudentAuth,userRouter);
 
 
 app.use('/ping', (req, res) => {
