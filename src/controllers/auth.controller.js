@@ -83,7 +83,7 @@ export const login = async (req, res) => {
     generateAuthToken(userExistance._id,res);
 
     //Send Login activity mail here.
-    //await sendLoginActivityMail(userExistance.email, userExistance.name);
+    await sendLoginActivityMail(userExistance.email, userExistance.name);
 
     //successful response
     return res.status(200).json({
