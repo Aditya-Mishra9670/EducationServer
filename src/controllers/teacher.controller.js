@@ -215,7 +215,7 @@ export const getMyCourses = async (req, res) => {
       .populate("enrolledStudents", "profilePic name")
       .populate("lectures");
     if (!courses.length) {
-      return res.status(400).json({ message: "No course found" });
+      return res.status(200).json({ message: "No course found" });
     }
     return res.status(200).json({ data: courses });
   } catch (error) {
