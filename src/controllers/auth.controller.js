@@ -44,11 +44,12 @@ export const signup = async (req, res) => {
     });
 
     await newUser.save();
-    sendWelcomeMail(email, username);
+    generateAuthToken(newUser._id,res);
+    // sendWelcomeMail(email, username);
     console.log("Registration Successful");
     return res.status(201).json({ message: "User saved successfully" });
   } catch (error) {
-    console.log(error); // Remove this after deployment
+    console.log(error);
     return res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -83,7 +84,7 @@ export const login = async (req, res) => {
     generateAuthToken(userExistance._id,res);
 
     //Send Login activity mail here.
-    await sendLoginActivityMail(userExistance.email, userExistance.name);
+    // await sendLoginActivityMail(userExistance.email, userExistance.name);
 
     //successful response
     return res.status(200).json({

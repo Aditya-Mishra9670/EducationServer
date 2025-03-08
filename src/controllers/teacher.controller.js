@@ -168,7 +168,7 @@ export const editVideo = async (req, res) => {
     if (!mongoose.isValidObjectId(videoId)) {
       return res.status(400).json({ message: "Invalid video id" });
     }
-    if (!thumbnail && !description) {
+    if (!thumbnail && !description && !title) {
       return res.status(400).json({ message: "Atleast one feild is required" });
     }
     const video = await Video.findById(videoId);
@@ -245,5 +245,37 @@ export const getSpecificCourse = async (req, res) => {
   } catch (error) {
     console.log(error);
     return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const getSpecificVideo = async (req, res) => {
+  const { videoId } = req.params;
+  try {
+    if (!mongoose.isValidObjectId(videoId)) {
+      return res.status(400).json({
+        message: "Invalid Video ID",
+      });
+    }
+    const video = await Video.findById(videoId).populate("courseId");
+    if (!video) {
+      return res.status(404).json({
+        message: "Video not found",
+      });
+    }
+    if (video?.courseId?.teacherId.toString() !== req?.user?._id.toString()) {
+      return res.status(400).json({
+        message: "Not allowed",
+      });
+    }
+
+    return res.status(200).json({
+      message: "Video fetched successfully",
+      data: video,
+    });
+  } catch (error) {
+    console.log("Error while getting specific video", error);
+    return res.status(500).json({
+      message: "Internal Server Error",
+    });
   }
 };

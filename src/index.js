@@ -11,9 +11,6 @@ dotenv.config();
 
 const app = express();
 
-app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ extended: true, limit: "10mb" }));
-
 app.use(cors({
     origin: ['http://localhost:8000','http://localhost:5173'],
     credentials: true,
@@ -21,8 +18,14 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-app.use(express.json());
+
+app.use('/ping', (req, res) => {
+    res.status(200).json({ message: "pong" });
+});
+
 app.use(cookieParser());
 
 app.use('/auth',authRouter);
@@ -32,9 +35,6 @@ app.use('/about',getAllData);
 app.use('/user',checkAuth,checkStudentAuth,userRouter);
 
 
-app.use('/ping', (req, res) => {
-    res.status(200).json({ message: "pong" });
-});
 
 app.use('/teacher',checkAuth,checkTeacherAuth,teacherRouter);
 
